@@ -13,6 +13,7 @@ def raw_market() -> dict:
         "clobTokenIds": '["token-yes", "token-no"]',
         "active": True,
         "closed": False,
+        "acceptingOrders": True,
         "volumeNum": 10000.0,
         "liquidityNum": 5000.0,
         "lastTradePrice": 0.65,
