@@ -36,7 +36,7 @@ ENV/
 .ipynb_checkpoints/
 *.ipynb
 
-# Data & outputs
+# Data & outputs — local DB, do not commit
 data/
 *.csv
 *.parquet

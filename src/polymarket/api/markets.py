@@ -20,6 +20,9 @@ def _normalize(market: dict) -> dict:
     market["outcomes"] = _parse_json_field(market.get("outcomes"))
     market["outcomePrices"] = _parse_json_field(market.get("outcomePrices"))
     market["clobTokenIds"] = _parse_json_field(market.get("clobTokenIds"))
+    events = market.get("events") or []
+    market["event_title"] = events[0].get("title") if events else None
+    market["event_slug"] = events[0].get("slug") if events else None
     return market
 
 
@@ -29,6 +32,7 @@ def get_markets(
     offset: int = 0,
     active: bool = True,
     closed: bool = False,
+    accepting_orders: bool = True,
 ) -> list[dict]:
     c = client or gamma_client()
     params: dict = {
@@ -38,7 +42,10 @@ def get_markets(
         "closed": str(closed).lower(),
     }
     raw = c.get("/markets", params=params)
-    return [_normalize(m) for m in (raw if isinstance(raw, list) else [])]
+    markets = [_normalize(m) for m in (raw if isinstance(raw, list) else [])]
+    if accepting_orders:
+        markets = [m for m in markets if m.get("acceptingOrders") is True]
+    return markets
 
 
 def get_all_active_markets(client: PolymarketClient | None = None) -> list[dict]:
