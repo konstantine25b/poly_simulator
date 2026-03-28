@@ -65,6 +65,15 @@ def get_all_active_markets(client: PolymarketClient | None = None) -> list[dict]
     return all_markets
 
 
+def get_market_tags(market_id: str, client: PolymarketClient | None = None) -> list[dict]:
+    c = client or gamma_client()
+    try:
+        raw = c.get(f"/markets/{market_id}/tags")
+        return raw if isinstance(raw, list) else []
+    except httpx.HTTPStatusError:
+        return []
+
+
 def get_market_by_id(market_id: str, client: PolymarketClient | None = None) -> dict | None:
     c = client or gamma_client()
     try:

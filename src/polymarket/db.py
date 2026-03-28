@@ -97,7 +97,9 @@ CREATE TABLE IF NOT EXISTS markets (
     umaResolutionStatuses       TEXT,
 
     event_title                 TEXT,
-    event_slug                  TEXT
+    event_slug                  TEXT,
+
+    tags                        TEXT
 )
 """
 
@@ -112,7 +114,20 @@ def get_connection(db_path: Path | None = None) -> sqlite3.Connection:
 
 def create_tables(conn: sqlite3.Connection) -> None:
     conn.execute(CREATE_MARKETS_TABLE)
+    _migrate(conn)
     conn.commit()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    existing = {row[1] for row in conn.execute("PRAGMA table_info('markets')").fetchall()}
+    new_columns = {
+        "tags": "TEXT",
+        "event_title": "TEXT",
+        "event_slug": "TEXT",
+    }
+    for col, col_type in new_columns.items():
+        if col not in existing:
+            conn.execute(f"ALTER TABLE markets ADD COLUMN {col} {col_type}")
 
 
 def _serialize(value: object) -> object:
