@@ -88,3 +88,21 @@ def get_market_by_id(market_id: str, client: PolymarketClient | None = None) -> 
     if not results:
         return None
     return _normalize(results[0])
+
+
+def get_market_by_slug(slug: str, client: PolymarketClient | None = None) -> dict | None:
+    c = client or gamma_client()
+    try:
+        raw = c.get("/markets", params={"slug": slug, "limit": 1})
+        results: list = raw if isinstance(raw, list) else []
+    except httpx.HTTPStatusError:
+        return None
+    if not results:
+        return None
+    return _normalize(results[0])
+
+
+def fetch_market(query: str, client: PolymarketClient | None = None) -> dict | None:
+    if query.isdigit():
+        return get_market_by_id(query, client)
+    return get_market_by_slug(query, client)
