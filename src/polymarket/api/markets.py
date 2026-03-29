@@ -33,6 +33,8 @@ def get_markets(
     active: bool = True,
     closed: bool = False,
     accepting_orders: bool = True,
+    order: str = "createdAt",
+    ascending: bool = False,
 ) -> list[dict]:
     c = client or gamma_client()
     params: dict = {
@@ -40,6 +42,8 @@ def get_markets(
         "offset": offset,
         "active": str(active).lower(),
         "closed": str(closed).lower(),
+        "order": order,
+        "ascending": str(ascending).lower(),
     }
     raw = c.get("/markets", params=params)
     markets = [_normalize(m) for m in (raw if isinstance(raw, list) else [])]
