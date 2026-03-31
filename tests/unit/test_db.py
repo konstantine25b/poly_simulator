@@ -4,12 +4,18 @@ from pathlib import Path
 
 import pytest
 
+from polymarket import db
 from polymarket.db import (
     _serialize,
     create_tables,
     get_connection,
     upsert_markets,
 )
+
+
+@pytest.fixture(autouse=True)
+def force_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(db.settings, "db_backend", "sqlite")
 
 
 @pytest.fixture
@@ -60,8 +66,9 @@ class TestSerialize:
     def test_float_is_unchanged(self) -> None:
         assert _serialize(3.14) == 3.14
 
-    def test_bool_is_unchanged(self) -> None:
-        assert _serialize(True) is True
+    def test_bool_becomes_int(self) -> None:
+        assert _serialize(True) == 1
+        assert _serialize(False) == 0
 
     def test_none_is_unchanged(self) -> None:
         assert _serialize(None) is None

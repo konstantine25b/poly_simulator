@@ -69,7 +69,14 @@ class TestGetMarkets:
 
         mock_client.get.assert_called_once_with(
             "/markets",
-            params={"limit": 100, "offset": 0, "active": "true", "closed": "false"},
+            params={
+                "limit": 100,
+                "offset": 0,
+                "active": "true",
+                "closed": "false",
+                "order": "createdAt",
+                "ascending": "false",
+            },
         )
 
     def test_sends_correct_params_custom(self) -> None:
@@ -80,7 +87,14 @@ class TestGetMarkets:
 
         mock_client.get.assert_called_once_with(
             "/markets",
-            params={"limit": 10, "offset": 20, "active": "false", "closed": "true"},
+            params={
+                "limit": 10,
+                "offset": 20,
+                "active": "false",
+                "closed": "true",
+                "order": "createdAt",
+                "ascending": "false",
+            },
         )
 
     def test_returns_empty_list_when_api_returns_empty(self) -> None:
