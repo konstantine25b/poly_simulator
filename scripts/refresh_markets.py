@@ -2,8 +2,15 @@ import sys
 
 sys.path.insert(0, "src")
 
-from polymarket.api.markets import get_markets
-from polymarket.db import create_tables, get_connection, upsert_markets
+from polymarket.api.markets import get_market_by_id, get_markets
+from polymarket.db import (
+    create_tables,
+    executemany,
+    fetchall,
+    get_connection,
+    placeholder,
+    upsert_markets,
+)
 
 PAGE_SIZE = 100
 
@@ -12,8 +19,10 @@ def refresh() -> None:
     conn = get_connection()
     create_tables(conn)
 
+    ph = placeholder()
     db_ids: set[str] = {
-        r[0] for r in conn.execute("SELECT id FROM markets WHERE active=1 AND closed=0").fetchall()
+        r["id"]
+        for r in fetchall(conn, "SELECT id FROM markets WHERE active=1 AND closed=0")
     }
     print(f"active+open markets in db : {len(db_ids)}")
 
@@ -23,7 +32,7 @@ def refresh() -> None:
 
     while True:
         print(f"fetching page {page} (offset={offset})...", end=" ", flush=True)
-        batch = get_markets(limit=PAGE_SIZE, offset=offset)
+        batch = get_markets(limit=PAGE_SIZE, offset=offset, accepting_orders=False)
         if not batch:
             print("empty — done")
             break
@@ -39,15 +48,24 @@ def refresh() -> None:
     new_markets = [m for m in api_markets if m["id"] not in db_ids]
     closed_ids = db_ids - api_ids
 
-    if new_markets:
-        inserted = upsert_markets(conn, new_markets)
-    else:
-        inserted = 0
+    inserted = upsert_markets(conn, new_markets) if new_markets else 0
 
+    confirmed_closed: list[str] = []
+    skipped: int = 0
     if closed_ids:
-        conn.executemany(
-            "UPDATE markets SET closed=1, active=0 WHERE id=?",
-            [(mid,) for mid in closed_ids],
+        print(f"\nverifying {len(closed_ids)} potentially closed markets...")
+        for mid in closed_ids:
+            live = get_market_by_id(mid)
+            if live and live.get("active") and not live.get("closed"):
+                skipped += 1
+            else:
+                confirmed_closed.append(mid)
+
+    if confirmed_closed:
+        executemany(
+            conn,
+            f"UPDATE markets SET closed=1, active=0 WHERE id={ph}",
+            [(mid,) for mid in confirmed_closed],
         )
         conn.commit()
 
@@ -57,7 +75,8 @@ def refresh() -> None:
     print(f"fetched from API  : {len(api_markets)}")
     print(f"new (inserted)    : {inserted}")
     print(f"unchanged         : {len(api_ids & db_ids)}")
-    print(f"marked closed     : {len(closed_ids)}")
+    print(f"skipped (still active, pagination gap) : {skipped}")
+    print(f"marked closed     : {len(confirmed_closed)}")
 
 
 if __name__ == "__main__":

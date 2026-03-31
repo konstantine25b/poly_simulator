@@ -1,5 +1,4 @@
 import json
-import sqlite3
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -7,7 +6,7 @@ sys.path.insert(0, "src")
 
 import httpx
 
-from polymarket.db import DB_PATH, create_tables, get_connection
+from polymarket.db import create_tables, executemany, fetchall, get_connection, placeholder
 
 WORKERS = 20
 
@@ -29,7 +28,7 @@ def seed_tags() -> None:
     conn = get_connection()
     create_tables(conn)
 
-    market_ids = [r[0] for r in conn.execute("SELECT id FROM markets").fetchall()]
+    market_ids = [r["id"] for r in fetchall(conn, "SELECT id FROM markets")]
     total = len(market_ids)
     print(f"fetching tags for {total} markets with {WORKERS} workers...\n")
 
@@ -46,7 +45,8 @@ def seed_tags() -> None:
             done += 1
 
             if len(batch) >= 200:
-                conn.executemany("UPDATE markets SET tags=? WHERE id=?", batch)
+                ph = placeholder()
+                executemany(conn, f"UPDATE markets SET tags={ph} WHERE id={ph}", batch)
                 conn.commit()
                 updated += len(batch)
                 batch = []
@@ -56,7 +56,8 @@ def seed_tags() -> None:
                 print(f"  {done}/{total} ({pct}%) — saved {updated}")
 
         if batch:
-            conn.executemany("UPDATE markets SET tags=? WHERE id=?", batch)
+            ph = placeholder()
+            executemany(conn, f"UPDATE markets SET tags={ph} WHERE id={ph}", batch)
             conn.commit()
             updated += len(batch)
 
