@@ -119,8 +119,8 @@ def print_order_book(book: dict, label: str) -> None:
     for lvl in bids:
         print(f"  {float(lvl['price']):>{col}.4f}  {float(lvl['size']):>{col}.2f}")
 
-    bid_liq = sum(float(l["price"]) * float(l["size"]) for l in bids)
-    ask_liq = sum(float(l["price"]) * float(l["size"]) for l in asks)
+    bid_liq = sum(float(lvl["price"]) * float(lvl["size"]) for lvl in bids)
+    ask_liq = sum(float(lvl["price"]) * float(lvl["size"]) for lvl in asks)
     print(f"\n  bid liquidity  ${bid_liq:,.2f}")
     print(f"  ask liquidity  ${ask_liq:,.2f}")
     print(f"  total levels   {len(bids)} bids / {len(asks)} asks")
@@ -154,7 +154,7 @@ def main() -> None:
         print("\n  no clob token IDs — order book unavailable")
     else:
         print(f"\n\n{'═' * 60}")
-        print(f"  LIVE ORDER BOOKS  (from CLOB API)")
+        print("  LIVE ORDER BOOKS  (from CLOB API)")
         print(f"{'═' * 60}")
 
         for i, token_id in enumerate(tokens):

@@ -76,8 +76,8 @@ def print_book(book: dict, label: str) -> None:
     for lvl in bids:
         print(f"  {float(lvl['price']):>{col_w}.4f}  {float(lvl['size']):>{col_w}.2f}")
 
-    total_bid_liq = sum(float(l["price"]) * float(l["size"]) for l in bids)
-    total_ask_liq = sum(float(l["price"]) * float(l["size"]) for l in asks)
+    total_bid_liq = sum(float(lvl["price"]) * float(lvl["size"]) for lvl in bids)
+    total_ask_liq = sum(float(lvl["price"]) * float(lvl["size"]) for lvl in asks)
     print(f"\n  bid liquidity  ${total_bid_liq:,.2f}")
     print(f"  ask liquidity  ${total_ask_liq:,.2f}")
 
