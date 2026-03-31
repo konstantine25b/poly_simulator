@@ -259,7 +259,7 @@ def _upsert_pg(conn: Any, markets: list[dict]) -> int:
     cur = conn.cursor()
     inserted = 0
     for market in markets:
-        row = {k: _serialize(v) for k, v in market.items() if k in columns}
+        row = {k.lower(): _serialize(v) for k, v in market.items() if k.lower() in columns}
         col_names = ", ".join(row.keys())
         placeholders = ", ".join(f"%({k})s" for k in row)
         update_set = ", ".join(f"{k} = EXCLUDED.{k}" for k in row if k != "id")
