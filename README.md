@@ -70,3 +70,27 @@ python scripts/refresh_markets.py
 ```
 
 ---
+
+## Inspecting a Market
+
+Use `inspect_market.py` to view all stored fields for a single market. Pass either a market **id** or **slug**:
+
+```bash
+python scripts/inspect_market.py <id or slug>
+```
+
+The script first tries the live Polymarket API. If the API is unreachable it falls back to the local DB cache and shows a stale-data warning. Output is grouped into sections: identity, dates, status, prices, volume, outcomes, tags, description, resolution, and rewards.
+
+---
+
+## Full Market View (with Live Order Books)
+
+Use `market_full.py` to get everything `inspect_market.py` shows **plus** the live CLOB order book for every outcome token:
+
+```bash
+python scripts/market_full.py <id or slug>
+```
+
+For each outcome the order book displays best bid/ask, spread, last trade price, tick size, minimum order size, all ask and bid levels with sizes, and total bid/ask liquidity.
+
+---
