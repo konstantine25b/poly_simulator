@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     postgres_user: str = "postgres"
     postgres_password: str = ""
 
+    # Paper trading 
+    paper_balance: float = 1000.0
+
     @property
     def postgres_dsn(self) -> str:
         return (
