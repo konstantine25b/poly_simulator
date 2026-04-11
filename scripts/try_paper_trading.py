@@ -1,0 +1,40 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
+from polymarket.db import create_tables, get_connection
+from polymarket.trading.service import TradingService
+
+conn = get_connection()
+create_tables(conn)
+conn.close()
+
+svc = TradingService(1)
+
+print(
+    """
+Paper trading REPL helpers are loaded.
+
+  svc              -> TradingService(1)  (same as TradingService("portfolio1") if that name exists)
+  TradingService   -> class (create_portfolio, list_portfolios, …)
+
+Try:
+  TradingService.list_portfolios()
+  TradingService.create_portfolio(name="MyBook", balance=500)
+  svc.get_portfolio()              # default portfolio for this svc
+  svc.get_portfolio(2)             # any portfolio by id
+  svc.get_portfolio("MyBook")      # or by name (case-insensitive match)
+  svc.get_positions("MyBook")
+  svc.get_trades(2)
+  svc.place_bet("will-spain-win-the-2026-fifa-world-cup-963", "Yes", 1.0)
+  svc.place_bet("…slug…", "Yes", 1.0, portfolio=2)     # debit portfolio 2 instead
+  svc.close_position(<position_id>, portfolio=2)     # close a position on portfolio 2
+  svc.close_position(<position_id>)        # sell all (default portfolio)
+  svc.close_position(<position_id>, 0.5)   # sell part
+
+Run interactively from repo root:
+  source venv/bin/activate
+  python -i scripts/try_paper_trading.py
+"""
+)
