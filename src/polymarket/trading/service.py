@@ -7,6 +7,12 @@ from polymarket.api.markets import fetch_market
 from polymarket.config import settings
 from polymarket.db import Connection, execute, fetchall, get_connection, placeholder
 
+MARKET_LOAD_FAILED = (
+    "This market could not be loaded after 3 attempts — it most likely ended or was removed. "
+    "If you know the outcome, use close_position_settled(position_id, won=True) for a full $1 per share payout, "
+    "or won=False if your side lost (no payout)."
+)
+
 
 def _as_dict(row: Any) -> dict[str, Any]:
     if isinstance(row, dict):
@@ -283,6 +289,7 @@ class TradingService:
                     d["current_price"] = None
                     d["market_value"] = None
                     d["unrealized_pnl"] = None
+                    d["market_load_error"] = MARKET_LOAD_FAILED
                     out.append(d)
                     continue
                 try:
@@ -291,12 +298,14 @@ class TradingService:
                     d["current_price"] = None
                     d["market_value"] = None
                     d["unrealized_pnl"] = None
+                    d["market_load_error"] = MARKET_LOAD_FAILED
                     out.append(d)
                     continue
                 mv = sh * cur
                 d["current_price"] = cur
                 d["market_value"] = mv
                 d["unrealized_pnl"] = mv - cost
+                d["market_load_error"] = None
                 out.append(d)
             return out
         finally:
@@ -466,7 +475,10 @@ class TradingService:
             sold = sh if shares is None else float(shares)
             market = fetch_market(mid)
             if not market:
-                raise ValueError("market not found")
+                raise ValueError(
+                    "market not found after 3 attempts; if the market ended, use "
+                    "close_position_settled(position_id, won=True or won=False)"
+                )
             price = _sell_fill_price(market, oc)
             total = sold * price
             cost_removed = (cost / sh) * sold if sh > 0 else 0.0
@@ -512,6 +524,79 @@ class TradingService:
                 "shares_sold": sold,
                 "remaining_shares": max(0.0, new_sh),
                 "position_closed": new_sh <= 1e-12,
+                "price": price,
+                "total": total,
+                "traded_at": now,
+            }
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    def close_position_settled(
+        self,
+        position_id: int,
+        won: bool,
+        portfolio: int | str | None = None,
+    ) -> dict[str, Any]:
+        conn = get_connection()
+        try:
+            pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio)
+            if settings.db_backend == "sqlite":
+                conn.execute("BEGIN IMMEDIATE")
+            ph = placeholder()
+            rows = fetchall(
+                conn,
+                f"SELECT * FROM positions WHERE id = {ph} AND portfolio_id = {ph}",
+                (position_id, pid_pf),
+            )
+            if not rows:
+                raise ValueError("position not found")
+            pos = _as_dict(rows[0])
+            mid = str(pos["market_id"])
+            oc = str(pos["outcome"])
+            sh = float(pos["shares"])
+            now = datetime.now(timezone.utc).isoformat()
+            if won:
+                price = 1.0
+                total = sh * 1.0
+                side = "settle_win"
+            else:
+                price = 0.0
+                total = 0.0
+                side = "settle_loss"
+            insert_trade = (
+                f"INSERT INTO trades (portfolio_id, market_id, market_question, market_slug, outcome, shares, price, side, total, traded_at) "
+                f"VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})"
+            )
+            trade_params = (
+                pid_pf,
+                mid,
+                pos.get("market_question"),
+                pos.get("market_slug"),
+                oc,
+                sh,
+                price,
+                side,
+                total,
+                now,
+            )
+            tid = _insert_returning_id(conn, insert_trade, trade_params)
+            execute(conn, f"DELETE FROM positions WHERE id = {ph}", (position_id,))
+            if won:
+                execute(
+                    conn,
+                    f"UPDATE portfolios SET balance = balance + {ph} WHERE id = {ph}",
+                    (total, pid_pf),
+                )
+            conn.commit()
+            return {
+                "trade_id": tid,
+                "position_id": position_id,
+                "portfolio_id": pid_pf,
+                "won": won,
+                "shares_settled": sh,
                 "price": price,
                 "total": total,
                 "traded_at": now,

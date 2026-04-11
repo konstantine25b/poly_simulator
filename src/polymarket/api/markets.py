@@ -1,4 +1,5 @@
 import json
+import time
 
 import httpx
 
@@ -102,7 +103,23 @@ def get_market_by_slug(slug: str, client: PolymarketClient | None = None) -> dic
     return _normalize(results[0])
 
 
-def fetch_market(query: str, client: PolymarketClient | None = None) -> dict | None:
-    if query.isdigit():
-        return get_market_by_id(query, client)
-    return get_market_by_slug(query, client)
+def fetch_market(query: str, client: PolymarketClient | None = None, attempts: int = 3) -> dict | None:
+    owns = client is None
+    c = client or gamma_client()
+    try:
+        for i in range(max(1, attempts)):
+            if i:
+                time.sleep(0.25 * i)
+            try:
+                if query.isdigit():
+                    m = get_market_by_id(query, c)
+                else:
+                    m = get_market_by_slug(query, c)
+            except httpx.HTTPError:
+                m = None
+            if m:
+                return m
+        return None
+    finally:
+        if owns:
+            c.close()

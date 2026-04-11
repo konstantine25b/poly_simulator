@@ -195,6 +195,41 @@ class TestTradingService:
         assert pos[0]["current_price"] == pytest.approx(0.5)
         assert pos[0]["market_value"] == pytest.approx(2.0)
         assert pos[0]["unrealized_pnl"] == pytest.approx(-0.08)
+        assert pos[0].get("market_load_error") is None
+
+    def test_get_positions_market_missing_message(
+        self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
+        svc = TradingService(1)
+        svc.place_bet("m1", "Yes", 4.0)
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: None)
+        pos = svc.get_positions()
+        assert len(pos) == 1
+        assert pos[0]["current_price"] is None
+        assert pos[0]["market_load_error"] is not None
+        assert "3 attempts" in (pos[0]["market_load_error"] or "")
+
+    def test_get_positions_no_price_message(
+        self, paper_db: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            "polymarket.trading.service.fetch_market",
+            lambda _q: {"id": "m1", "outcomes": [], "outcomePrices": []},
+        )
+        conn = get_connection(paper_db)
+        ph = placeholder()
+        now = "2020-01-01T00:00:00+00:00"
+        execute(
+            conn,
+            f"INSERT INTO positions (portfolio_id, market_id, market_question, market_slug, outcome, shares, avg_price, cost, opened_at) "
+            f"VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})",
+            (1, "m1", "Q", None, "Yes", 1.0, 0.5, 0.5, now),
+        )
+        conn.commit()
+        conn.close()
+        pos = TradingService(1).get_positions()
+        assert pos[0]["market_load_error"] is not None
 
     def test_get_trades_empty(self, paper_db: Path) -> None:
         svc = TradingService(1)
@@ -382,6 +417,68 @@ class TestTradingService:
         placed = svc.place_bet("m1", "Yes", 2.0)
         with pytest.raises(ValueError, match="shares must be positive"):
             svc.close_position(int(placed["position_id"]), 0.0)
+
+    def test_close_position_market_missing_suggests_settle(
+        self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
+        svc = TradingService(1)
+        placed = svc.place_bet("m1", "Yes", 10.0)
+        pid = int(placed["position_id"])
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: None)
+        with pytest.raises(ValueError, match="close_position_settled"):
+            svc.close_position(pid)
+
+    def test_close_position_settled_win(
+        self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
+        svc = TradingService(1)
+        before = float(
+            fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
+        )
+        placed = svc.place_bet("m1", "Yes", 10.0)
+        pid = int(placed["position_id"])
+        after_buy = float(
+            fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
+        )
+        out = svc.close_position_settled(pid, won=True)
+        assert out["won"] is True
+        assert out["total"] == pytest.approx(10.0)
+        assert out["price"] == pytest.approx(1.0)
+        after = float(
+            fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
+        )
+        assert after == pytest.approx(after_buy + 10.0)
+        assert after == pytest.approx(before - 10.0 * 0.52 + 10.0)
+        trades = svc.get_trades()
+        assert trades[0]["side"] == "settle_win"
+        assert int(fetchall(get_connection(paper_db), "SELECT COUNT(*) AS c FROM positions")[0]["c"]) == 0
+
+    def test_close_position_settled_loss(
+        self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
+        svc = TradingService(1)
+        before = float(
+            fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
+        )
+        placed = svc.place_bet("m1", "Yes", 10.0)
+        pid = int(placed["position_id"])
+        after_buy = float(
+            fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
+        )
+        out = svc.close_position_settled(pid, won=False)
+        assert out["won"] is False
+        assert out["total"] == pytest.approx(0.0)
+        assert out["price"] == pytest.approx(0.0)
+        after = float(
+            fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
+        )
+        assert after == pytest.approx(after_buy)
+        assert after == pytest.approx(before - 10.0 * 0.52)
+        trades = svc.get_trades()
+        assert trades[0]["side"] == "settle_loss"
 
 
 @pytest.mark.integration
