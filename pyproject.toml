@@ -14,6 +14,10 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = "-m \"not integration\""
+markers = [
+    "integration: calls live Polymarket APIs (run with pytest -m integration)",
+]
 
 [tool.ruff]
 line-length = 100
