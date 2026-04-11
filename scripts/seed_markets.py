@@ -1,4 +1,7 @@
 import sys
+import time
+
+import httpx
 
 sys.path.insert(0, "src")
 
@@ -7,6 +10,7 @@ from polymarket.db import create_tables, get_connection, upsert_markets
 from polymarket.config import settings
 
 _PAGE_SIZE = 100
+_TIMEOUT_PAUSE = 10
 
 
 def seed() -> None:
@@ -22,7 +26,15 @@ def seed() -> None:
 
     while True:
         print(f"fetching page {page} (offset={offset})...", end=" ", flush=True)
-        batch = get_markets(limit=_PAGE_SIZE, offset=offset, accepting_orders=False)
+        try:
+            batch = get_markets(limit=_PAGE_SIZE, offset=offset, accepting_orders=False)
+        except httpx.ReadTimeout:
+            print(f"timeout — waiting {_TIMEOUT_PAUSE}s then continuing")
+            time.sleep(_TIMEOUT_PAUSE)
+            offset += _PAGE_SIZE
+            page += 1
+            continue
+
         if not batch:
             print("empty — done")
             break
