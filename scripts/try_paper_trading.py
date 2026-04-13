@@ -9,6 +9,7 @@ for _k in list(sys.modules):
     if _k == "polymarket" or _k.startswith("polymarket."):
         del sys.modules[_k]
 
+from polymarket.auth import Access
 from polymarket.db import create_tables, get_connection
 from polymarket.trading.service import TradingService
 
@@ -16,18 +17,20 @@ conn = get_connection()
 create_tables(conn)
 conn.close()
 
-svc = TradingService(1)
+RELAX = Access(1, True)
+svc = TradingService(1, RELAX)
 
 print(
     """
 Paper trading REPL helpers are loaded.
 
-  svc              -> TradingService(1)  (same as TradingService("portfolio1") if that name exists)
+  RELAX            -> Access(1, True)  (local REPL: treat as admin for all portfolios)
+  svc              -> TradingService(1, RELAX)
   TradingService   -> class (create_portfolio, list_portfolios, …)
 
 Try:
-  TradingService.list_portfolios()
-  TradingService.create_portfolio(name="MyBook", balance=500)
+  TradingService.list_portfolios(RELAX)
+  TradingService.create_portfolio(RELAX, name="MyBook", balance=500)
   svc.get_portfolio()              # default portfolio for this svc
   svc.get_portfolio(2)             # any portfolio by id
   svc.get_portfolio("MyBook")      # or by name (case-insensitive match)
