@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from polymarket import db
+from polymarket.auth import Access
 from polymarket.db import create_tables, execute, fetchall, get_connection, placeholder
 from polymarket.trading.service import (
     TradingService,
@@ -12,6 +13,8 @@ from polymarket.trading.service import (
     _resolve_outcome_price,
     _sell_fill_price,
 )
+
+U1 = Access(1, False)
 
 
 @pytest.fixture(autouse=True)
@@ -95,7 +98,7 @@ class TestTradingService:
             return dict(api_market)
 
         monkeypatch.setattr("polymarket.trading.service.fetch_market", fake_fetch)
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         before = float(
             fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0][
                 "balance"
@@ -143,25 +146,25 @@ class TestTradingService:
             return dict(api_market)
 
         monkeypatch.setattr("polymarket.trading.service.fetch_market", fake_fetch)
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         with pytest.raises(ValueError, match="insufficient balance"):
             svc.place_bet("m1", "Yes", 10.0)
 
     def test_place_bet_non_positive_shares(self, paper_db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: {"id": "x"})
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         with pytest.raises(ValueError, match="shares must be positive"):
             svc.place_bet("m1", "Yes", 0.0)
 
     def test_place_bet_market_not_found(self, paper_db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: None)
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         with pytest.raises(ValueError, match="market not found"):
             svc.place_bet("missing", "Yes", 1.0)
 
     def test_close_unknown_position(self, paper_db: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: None)
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         with pytest.raises(ValueError, match="position not found"):
             svc.close_position(99999)
 
@@ -179,7 +182,7 @@ class TestTradingService:
             return m
 
         monkeypatch.setattr("polymarket.trading.service.fetch_market", fake_fetch)
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         svc.place_bet("m1", "Yes", 10.0)
         pf = svc.get_portfolio()
         assert pf["total_invested"] == pytest.approx(5.2)
@@ -188,7 +191,7 @@ class TestTradingService:
 
     def test_get_positions_enriched(self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         svc.place_bet("m1", "Yes", 4.0)
         pos = svc.get_positions()
         assert len(pos) == 1
@@ -201,7 +204,7 @@ class TestTradingService:
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         svc.place_bet("m1", "Yes", 4.0)
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: None)
         pos = svc.get_positions()
@@ -228,11 +231,11 @@ class TestTradingService:
         )
         conn.commit()
         conn.close()
-        pos = TradingService(1).get_positions()
+        pos = TradingService(1, U1).get_positions()
         assert pos[0]["market_load_error"] is not None
 
     def test_get_trades_empty(self, paper_db: Path) -> None:
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         assert svc.get_trades() == []
 
     def test_seed_portfolio_default_name(self, paper_db: Path) -> None:
@@ -241,7 +244,7 @@ class TestTradingService:
         assert float(row["balance"]) == pytest.approx(float(db.settings.paper_balance))
 
     def test_create_portfolio_custom(self, paper_db: Path) -> None:
-        p = TradingService.create_portfolio(name="Alpha", balance=500.0)
+        p = TradingService.create_portfolio(U1,name="Alpha", balance=500.0)
         assert p["name"] == "Alpha"
         assert p["balance"] == pytest.approx(500.0)
         row = fetchall(
@@ -252,31 +255,31 @@ class TestTradingService:
         assert row["name"] == "Alpha"
 
     def test_create_portfolio_duplicate_name_raises(self, paper_db: Path) -> None:
-        TradingService.create_portfolio(name="Dup", balance=1.0)
+        TradingService.create_portfolio(U1,name="Dup", balance=1.0)
         with pytest.raises(ValueError, match="portfolio name already exists"):
-            TradingService.create_portfolio(name="dup", balance=2.0)
+            TradingService.create_portfolio(U1,name="dup", balance=2.0)
 
     def test_init_and_get_portfolio_by_name(self, paper_db: Path) -> None:
-        svc = TradingService("portfolio1")
+        svc = TradingService("portfolio1", U1)
         assert svc.portfolio_id == 1
         assert svc.get_portfolio()["name"] == "portfolio1"
         assert svc.get_portfolio(1)["portfolio_id"] == 1
         assert svc.get_portfolio("portfolio1")["portfolio_id"] == 1
 
     def test_create_portfolio_auto_name(self, paper_db: Path) -> None:
-        p = TradingService.create_portfolio()
+        p = TradingService.create_portfolio(U1,)
         assert p["name"] == f"portfolio{p['id']}"
 
     def test_two_portfolios_isolated(
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        p2 = TradingService.create_portfolio(name="Second", balance=100.0)
+        p2 = TradingService.create_portfolio(U1,name="Second", balance=100.0)
 
         def fake_fetch(_q: str) -> dict | None:
             return dict(api_market)
 
         monkeypatch.setattr("polymarket.trading.service.fetch_market", fake_fetch)
-        svc2 = TradingService(p2["id"])
+        svc2 = TradingService(p2["id"], U1)
         svc2.place_bet("m1", "Yes", 10.0)
         b1 = float(
             fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
@@ -290,7 +293,7 @@ class TestTradingService:
             )[0]["balance"]
         )
         assert b2 == pytest.approx(94.8)
-        assert len(TradingService(1).get_trades()) == 0
+        assert len(TradingService(1, U1).get_trades()) == 0
         assert len(svc2.get_trades()) == 1
 
     def test_close_position_wrong_portfolio(
@@ -300,13 +303,13 @@ class TestTradingService:
             return dict(api_market)
 
         monkeypatch.setattr("polymarket.trading.service.fetch_market", fake_fetch)
-        placed = TradingService(1).place_bet("m1", "Yes", 10.0)
+        placed = TradingService(1, U1).place_bet("m1", "Yes", 10.0)
         pid = int(placed["position_id"])
-        p2 = TradingService.create_portfolio(balance=1000.0)
+        p2 = TradingService.create_portfolio(U1,balance=1000.0)
         with pytest.raises(ValueError, match="position not found"):
-            TradingService(p2["id"]).close_position(pid)
+            TradingService(p2["id"], U1).close_position(pid)
         with pytest.raises(ValueError, match="position not found"):
-            TradingService(1).close_position(pid, portfolio=p2["id"])
+            TradingService(1, U1).close_position(pid, portfolio=p2["id"])
 
     def test_place_bet_and_close_with_portfolio_override(
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
@@ -315,8 +318,8 @@ class TestTradingService:
             return dict(api_market)
 
         monkeypatch.setattr("polymarket.trading.service.fetch_market", fake_fetch)
-        p2 = TradingService.create_portfolio(name="Alt", balance=500.0)
-        svc = TradingService(1)
+        p2 = TradingService.create_portfolio(U1,name="Alt", balance=500.0)
+        svc = TradingService(1, U1)
         placed = svc.place_bet("m1", "Yes", 10.0, portfolio=p2["id"])
         assert placed["portfolio_id"] == p2["id"]
         b1 = float(
@@ -355,7 +358,7 @@ class TestTradingService:
             return m
 
         monkeypatch.setattr("polymarket.trading.service.fetch_market", fake_fetch)
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         a = svc.place_bet("m1", "Yes", 10.0)
         b = svc.place_bet("m1", "Yes", 10.0)
         assert a["position_id"] == b["position_id"]
@@ -376,7 +379,7 @@ class TestTradingService:
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         before = float(
             fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
         )
@@ -404,7 +407,7 @@ class TestTradingService:
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         placed = svc.place_bet("m1", "Yes", 3.0)
         with pytest.raises(ValueError, match="cannot sell more"):
             svc.close_position(int(placed["position_id"]), 10.0)
@@ -413,7 +416,7 @@ class TestTradingService:
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         placed = svc.place_bet("m1", "Yes", 2.0)
         with pytest.raises(ValueError, match="shares must be positive"):
             svc.close_position(int(placed["position_id"]), 0.0)
@@ -422,7 +425,7 @@ class TestTradingService:
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         placed = svc.place_bet("m1", "Yes", 10.0)
         pid = int(placed["position_id"])
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: None)
@@ -433,7 +436,7 @@ class TestTradingService:
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         before = float(
             fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
         )
@@ -459,7 +462,7 @@ class TestTradingService:
         self, paper_db: Path, api_market: dict, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: dict(api_market))
-        svc = TradingService(1)
+        svc = TradingService(1, U1)
         before = float(
             fetchall(get_connection(paper_db), "SELECT balance FROM portfolios WHERE id = 1")[0]["balance"]
         )
@@ -489,7 +492,7 @@ def test_live_spain_world_cup_slug_round_trip(tmp_path: Path, monkeypatch: pytes
     conn = get_connection(path)
     create_tables(conn)
     conn.close()
-    svc = TradingService(1)
+    svc = TradingService(1, U1)
     from polymarket.api.markets import fetch_market as live_fetch
 
     m = live_fetch(slug)
