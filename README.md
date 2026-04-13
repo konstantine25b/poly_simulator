@@ -69,6 +69,14 @@ After the initial seed, use `refresh_markets.py` to keep data up to date:
 python scripts/refresh_markets.py
 ```
 
+For day-to-day updates, fetching only until the newest pages overlap your DB is much faster:
+
+```bash
+python scripts/refresh_markets.py --incremental   # or: -i
+```
+
+That mode still inserts newly created markets but does not walk the entire catalog, so it does not detect markets that closed; run `refresh_markets.py` without `--incremental` periodically when you need closures synced.
+
 ---
 
 ## Inspecting a Market
