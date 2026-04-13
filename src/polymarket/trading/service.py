@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+from polymarket.auth import Access
 from polymarket.api.markets import fetch_market
 from polymarket.config import settings
 from polymarket.db import Connection, execute, fetchall, get_connection, placeholder
@@ -109,64 +110,92 @@ def _insert_returning_id(conn: Connection, insert_sql: str, params: tuple) -> in
     return int(rid[0]["id"])
 
 
-def _name_taken(conn: Connection, name: str, exclude_id: int | None = None) -> bool:
+def _name_taken(conn: Connection, name: str, owner_id: int, exclude_id: int | None = None) -> bool:
     ph = placeholder()
     key = name.strip().lower()
     if exclude_id is None:
-        rows = fetchall(conn, f"SELECT id FROM portfolios WHERE lower(name) = {ph}", (key,))
+        rows = fetchall(
+            conn,
+            f"SELECT id FROM portfolios WHERE user_id = {ph} AND lower(name) = {ph}",
+            (owner_id, key),
+        )
     else:
         rows = fetchall(
             conn,
-            f"SELECT id FROM portfolios WHERE lower(name) = {ph} AND id <> {ph}",
-            (key, exclude_id),
+            f"SELECT id FROM portfolios WHERE user_id = {ph} AND lower(name) = {ph} AND id <> {ph}",
+            (owner_id, key, exclude_id),
         )
     return len(rows) > 0
 
 
-def _resolve_portfolio_id(conn: Connection, portfolio: int | str) -> int:
+def _resolve_portfolio_id(conn: Connection, portfolio: int | str, access: Access) -> int:
     ph = placeholder()
     if isinstance(portfolio, int):
-        rows = fetchall(conn, f"SELECT id FROM portfolios WHERE id = {ph}", (portfolio,))
-        if not rows:
+        pid = int(portfolio)
+    else:
+        s = str(portfolio).strip()
+        if not s:
             raise ValueError("portfolio not found")
-        return int(rows[0]["id"])
-    s = str(portfolio).strip()
-    if not s:
-        raise ValueError("portfolio not found")
-    if s.isdigit():
-        pid = int(s)
-        rows = fetchall(conn, f"SELECT id FROM portfolios WHERE id = {ph}", (pid,))
-        if rows:
-            return int(rows[0]["id"])
-    rows = fetchall(
-        conn,
-        f"SELECT id FROM portfolios WHERE lower(name) = {ph} ORDER BY id LIMIT 1",
-        (s.lower(),),
-    )
+        if s.isdigit():
+            pid = int(s)
+        else:
+            if access.is_admin:
+                rows = fetchall(
+                    conn,
+                    f"SELECT id FROM portfolios WHERE lower(name) = {ph} ORDER BY id LIMIT 1",
+                    (s.lower(),),
+                )
+            else:
+                rows = fetchall(
+                    conn,
+                    f"SELECT id FROM portfolios WHERE lower(name) = {ph} AND user_id = {ph} ORDER BY id LIMIT 1",
+                    (s.lower(), access.user_id),
+                )
+            if not rows:
+                raise ValueError("portfolio not found")
+            pid = int(rows[0]["id"])
+
+    rows = fetchall(conn, f"SELECT id, user_id FROM portfolios WHERE id = {ph}", (pid,))
     if not rows:
+        raise ValueError("portfolio not found")
+    oid = int(rows[0]["user_id"])
+    if not access.is_admin and oid != access.user_id:
         raise ValueError("portfolio not found")
     return int(rows[0]["id"])
 
 
 class TradingService:
-    def __init__(self, portfolio: int | str) -> None:
+    def __init__(self, portfolio: int | str, access: Access) -> None:
         conn = get_connection()
         try:
-            self.portfolio_id = _resolve_portfolio_id(conn, portfolio)
+            self.access = access
+            self.portfolio_id = _resolve_portfolio_id(conn, portfolio, access)
         finally:
             conn.close()
 
     @staticmethod
-    def list_portfolios() -> list[dict[str, Any]]:
+    def list_portfolios(access: Access) -> list[dict[str, Any]]:
         conn = get_connection()
         try:
-            rows = fetchall(conn, "SELECT id, name, balance, created_at FROM portfolios ORDER BY id")
+            ph = placeholder()
+            if access.is_admin:
+                rows = fetchall(
+                    conn,
+                    "SELECT id, name, balance, created_at, user_id FROM portfolios ORDER BY id",
+                )
+            else:
+                rows = fetchall(
+                    conn,
+                    f"SELECT id, name, balance, created_at, user_id FROM portfolios WHERE user_id = {ph} ORDER BY id",
+                    (access.user_id,),
+                )
             return [_as_dict(r) for r in rows]
         finally:
             conn.close()
 
     @staticmethod
     def create_portfolio(
+        access: Access,
         name: str | None = None,
         balance: float | None = None,
     ) -> dict[str, Any]:
@@ -179,46 +208,47 @@ class TradingService:
         ph = placeholder()
         conn = get_connection()
         try:
+            oid = access.user_id
             if name is None:
                 pending = "__pending__"
                 if settings.db_backend == "postgres":
                     rows = fetchall(
                         conn,
-                        f"INSERT INTO portfolios (name, balance, created_at) VALUES ({ph}, {ph}, {ph}) RETURNING id",
-                        (pending, bal, now),
+                        f"INSERT INTO portfolios (user_id, name, balance, created_at) VALUES ({ph}, {ph}, {ph}, {ph}) RETURNING id",
+                        (oid, pending, bal, now),
                     )
                     rid = int(rows[0]["id"])
                 else:
                     execute(
                         conn,
-                        f"INSERT INTO portfolios (name, balance, created_at) VALUES ({ph}, {ph}, {ph})",
-                        (pending, bal, now),
+                        f"INSERT INTO portfolios (user_id, name, balance, created_at) VALUES ({ph}, {ph}, {ph}, {ph})",
+                        (oid, pending, bal, now),
                     )
                     rid = int(fetchall(conn, "SELECT last_insert_rowid() AS id")[0]["id"])
                 final_name = f"portfolio{rid}"
-                if _name_taken(conn, final_name, exclude_id=rid):
+                if _name_taken(conn, final_name, oid, exclude_id=rid):
                     raise RuntimeError("could not assign unique default portfolio name")
                 execute(conn, f"UPDATE portfolios SET name = {ph} WHERE id = {ph}", (final_name, rid))
             else:
                 final_name = str(name).strip()
-                if _name_taken(conn, final_name):
+                if _name_taken(conn, final_name, oid):
                     raise ValueError("portfolio name already exists")
                 if settings.db_backend == "postgres":
                     rows = fetchall(
                         conn,
-                        f"INSERT INTO portfolios (name, balance, created_at) VALUES ({ph}, {ph}, {ph}) RETURNING id",
-                        (final_name, bal, now),
+                        f"INSERT INTO portfolios (user_id, name, balance, created_at) VALUES ({ph}, {ph}, {ph}, {ph}) RETURNING id",
+                        (oid, final_name, bal, now),
                     )
                     rid = int(rows[0]["id"])
                 else:
                     execute(
                         conn,
-                        f"INSERT INTO portfolios (name, balance, created_at) VALUES ({ph}, {ph}, {ph})",
-                        (final_name, bal, now),
+                        f"INSERT INTO portfolios (user_id, name, balance, created_at) VALUES ({ph}, {ph}, {ph}, {ph})",
+                        (oid, final_name, bal, now),
                     )
                     rid = int(fetchall(conn, "SELECT last_insert_rowid() AS id")[0]["id"])
             conn.commit()
-            return {"id": rid, "name": final_name, "balance": bal, "created_at": now}
+            return {"id": rid, "name": final_name, "balance": bal, "created_at": now, "user_id": oid}
         except Exception:
             conn.rollback()
             raise
@@ -229,7 +259,7 @@ class TradingService:
         conn = get_connection()
         try:
             ph = placeholder()
-            pid = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio)
+            pid = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
             rows = fetchall(
                 conn,
                 f"SELECT id, name, balance FROM portfolios WHERE id = {ph}",
@@ -275,7 +305,7 @@ class TradingService:
     def get_positions(self, portfolio: int | str | None = None) -> list[dict[str, Any]]:
         conn = get_connection()
         try:
-            pid = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio)
+            pid = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
             rows = self._load_positions_rows_for(conn, pid)
             out: list[dict[str, Any]] = []
             for pos in rows:
@@ -315,7 +345,7 @@ class TradingService:
         conn = get_connection()
         try:
             ph = placeholder()
-            pid = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio)
+            pid = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
             rows = fetchall(
                 conn,
                 f"SELECT * FROM trades WHERE portfolio_id = {ph} ORDER BY traded_at DESC, id DESC",
@@ -346,7 +376,7 @@ class TradingService:
         ph = placeholder()
         conn = get_connection()
         try:
-            pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio)
+            pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
             if settings.db_backend == "sqlite":
                 conn.execute("BEGIN IMMEDIATE")
             if settings.db_backend == "postgres":
@@ -454,7 +484,7 @@ class TradingService:
             raise ValueError("shares must be positive")
         conn = get_connection()
         try:
-            pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio)
+            pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
             if settings.db_backend == "sqlite":
                 conn.execute("BEGIN IMMEDIATE")
             ph = placeholder()
@@ -542,7 +572,7 @@ class TradingService:
     ) -> dict[str, Any]:
         conn = get_connection()
         try:
-            pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio)
+            pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
             if settings.db_backend == "sqlite":
                 conn.execute("BEGIN IMMEDIATE")
             ph = placeholder()
