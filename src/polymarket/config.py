@@ -1,5 +1,6 @@
 from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,6 +32,26 @@ class Settings(BaseSettings):
 
     # Paper trading 
     paper_balance: float = 1000.0
+
+    jwt_secret: str = Field(
+        default="dev-only-set-JWT_SECRET-in-env-for-production",
+        validation_alias="JWT_SECRET",
+    )
+    access_token_ttl_seconds: int = Field(
+        default=86_400,
+        validation_alias="ACCESS_TOKEN_TTL_SECONDS",
+    )
+
+    admin_bootstrap_email: str = Field(
+        default="admin@admin123.com",
+        validation_alias="ADMIN_BOOTSTRAP_EMAIL",
+    )
+    admin_bootstrap_password: str = Field(
+        default="admin123",
+        validation_alias="ADMIN_BOOTSTRAP_PASSWORD",
+    )
+
+    refresh_api_key: str = Field(default="", validation_alias="REFRESH_API_KEY")
 
     @property
     def postgres_dsn(self) -> str:
