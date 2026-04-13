@@ -103,6 +103,93 @@ For each outcome the order book displays best bid/ask, spread, last trade price,
 
 ---
 
+## HTTP API (FastAPI)
+
+The same catalog refresh, market lookups, Gamma listing, and paper trading logic exposed by the Python library and CLI scripts is also available over HTTP. The app lives in `src/polymarket/http_app.py`. On startup it runs `create_tables` once (same schema as the rest of the project). Terminal scripts such as `scripts/refresh_markets.py` are unchanged; they call the shared `refresh_catalog` helper used by the API.
+
+**Run the server** (from the repo root, with the venv activated):
+
+```bash
+export PYTHONPATH=src
+uvicorn polymarket.http_app:app --reload --host 0.0.0.0 --port 8000
+```
+
+Then open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for interactive Swagger UI, or call endpoints with `curl` as below (replace the host or port if you changed them).
+
+**Health**
+
+```bash
+curl -s http://127.0.0.1:8000/health
+```
+
+**Catalog refresh** (calls live Gamma APIs; full refresh can take a long time)
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/markets/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{}'
+
+curl -s -X POST http://127.0.0.1:8000/markets/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"incremental":true}'
+```
+
+**Market data** (`QUERY` is a numeric market id or slug)
+
+```bash
+curl -s "http://127.0.0.1:8000/markets/QUERY/live"
+curl -s "http://127.0.0.1:8000/markets/QUERY/cached"
+curl -s "http://127.0.0.1:8000/markets/QUERY/resolved"
+curl -s "http://127.0.0.1:8000/markets/QUERY/full"
+```
+
+The `resolved` route tries the live API first, then the local database, and sets `stale` when only cached data is available. The `full` route adds one CLOB order book per outcome token (network required).
+
+**List markets from the local database** (paged; optional `active`, `closed`, and `q` substring filter on question and slug; `limit` capped at 500)
+
+```bash
+curl -s "http://127.0.0.1:8000/db/markets?limit=50&offset=0"
+curl -s "http://127.0.0.1:8000/db/markets?active=true&closed=false&q=election"
+```
+
+Response shape: `{"items":[...],"total":N,"limit":L,"offset":O}`.
+
+**Gamma markets listing** (paged proxy to `get_markets`)
+
+```bash
+curl -s "http://127.0.0.1:8000/gamma/markets?limit=5&offset=0&active=true&closed=false&accepting_orders=true"
+```
+
+**Paper trading** (`PORTFOLIO` is a portfolio id or name, for example `1` or `portfolio1`)
+
+```bash
+curl -s http://127.0.0.1:8000/portfolios
+
+curl -s -X POST http://127.0.0.1:8000/portfolios \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"demo","balance":1000}'
+
+curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/summary"
+curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/positions"
+curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/trades"
+
+curl -s -X POST "http://127.0.0.1:8000/portfolios/PORTFOLIO/bet" \
+  -H 'Content-Type: application/json' \
+  -d '{"market_id":"MARKET_ID_OR_SLUG","outcome":"Yes","shares":10}'
+
+curl -s -X POST "http://127.0.0.1:8000/portfolios/PORTFOLIO/close" \
+  -H 'Content-Type: application/json' \
+  -d '{"position_id":1,"shares":5}'
+
+curl -s -X POST "http://127.0.0.1:8000/portfolios/PORTFOLIO/settle" \
+  -H 'Content-Type: application/json' \
+  -d '{"position_id":1,"won":true}'
+```
+
+Invalid input or business-rule failures return **400** with a JSON `detail` string; missing markets return **404**. Bets, closes, and portfolio summaries need live market data where applicable, so run these with network access and valid ids from your seeded database or from Polymarket.
+
+---
+
 ## Paper trading (`TradingService`)
 
 Paper balances, positions, and trades live in the same database as markets (`portfolios`, `positions`, `trades` tables). Initialize the schema once (creates tables and a default portfolio when empty):
