@@ -38,13 +38,32 @@ pip install -e .
 cp .env.example .env
 ```
 
-Edit `.env` and set your values. The only required choice is the database backend:
+Edit `.env` and set your values. You must choose a database backend. For the HTTP API you should also set **auth-related** variables (see `.env.example`).
+
+**Database**
 
 ```
 DB_BACKEND=sqlite      # no setup needed, uses a local file
 # or
 DB_BACKEND=postgres    # fill in POSTGRES_* fields below
 ```
+
+**Auth and tokens (HTTP API)**
+
+- **`JWT_SECRET`** — Secret used to sign bearer access tokens. Use a long random string in any shared or production deployment (for example `python -c "import secrets; print(secrets.token_urlsafe(48))"`). If you change it, existing tokens stop working until users log in again.
+- **`ACCESS_TOKEN_TTL_SECONDS`** — Optional. Lifetime of access tokens in seconds (default one day).
+- **`REFRESH_API_KEY`** — Optional. If set, `POST /markets/refresh` accepts header `X-Refresh-Api-Key` with this value without a JWT (rotate or leave empty in production if you rely only on admin Bearer tokens).
+
+**First admin user (bootstrap)**
+
+If the database has **no users** yet, the app creates one admin on first startup. By default (when you do not override these in `.env`) that account is:
+
+- **Email:** `admin@admin123.com`
+- **Password:** `admin123`
+
+Set **`ADMIN_BOOTSTRAP_EMAIL`** and **`ADMIN_BOOTSTRAP_PASSWORD`** in `.env`. On **every** app startup, that email is ensured to exist as an **admin**, with the password from env (the account is created if missing; if it already exists, it is promoted to admin and the password is updated to match env). If **both** variables are empty, this sync step does nothing. On a totally empty database, the same pair is also used for the initial bootstrap user when both are non-empty.
+
+Passwords are stored with **PBKDF2-SHA256** and a per-user salt (no extra “hashing secret” in `.env`).
 
 **4. Set up the database**
 
@@ -105,7 +124,7 @@ For each outcome the order book displays best bid/ask, spread, last trade price,
 
 ## HTTP API (FastAPI)
 
-The same catalog refresh, market lookups, Gamma listing, and paper trading logic exposed by the Python library and CLI scripts is also available over HTTP. The app lives in `src/polymarket/http_app.py`. On startup it runs `create_tables` once (same schema as the rest of the project). Terminal scripts such as `scripts/refresh_markets.py` are unchanged; they call the shared `refresh_catalog` helper used by the API.
+The same catalog refresh, market lookups, Gamma listing, and paper trading logic exposed by the Python library and CLI scripts is also available over HTTP. The app lives in `src/polymarket/http_app.py`. Authentication helpers (`Access`, password hashing, JWT-style bearer tokens, user persistence) live in `src/polymarket/auth/`. On startup it runs `create_tables` once (same schema as the rest of the project). Terminal scripts such as `scripts/refresh_markets.py` are unchanged; they call the shared `refresh_catalog` helper used by the API. Over HTTP, **`POST /markets/refresh`** is restricted to **admin** accounts only; the CLI scripts are not.
 
 **Run the server** (from the repo root, with the venv activated):
 
@@ -114,7 +133,53 @@ export PYTHONPATH=src
 uvicorn polymarket.http_app:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Then open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for interactive Swagger UI, or call endpoints with `curl` as below (replace the host or port if you changed them).
+Then open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for interactive Swagger UI, or call endpoints with `curl` as below (replace the host or port if you changed them). For protected routes, use **Authorize** (lock icon), choose **HTTPBearer**, and paste only the token value (Swagger adds the `Bearer ` prefix). You get a token from **POST /auth/login** or **POST /auth/register** (`access_token` in the JSON body).
+
+Public routes (no bearer token): **`/health`**, **`/markets/{query}/*`**, **`/db/markets`**, **`/gamma/markets`**, **`/auth/register`**, **`/auth/login`**. **`POST /markets/refresh`** requires an **admin** JWT **or** a matching **`X-Refresh-Api-Key`** when **`REFRESH_API_KEY`** is set in server env. **All `/portfolios` routes** and **`/auth/me`** require an `Authorization: Bearer <token>` header from login or register.
+
+**Authentication**
+
+```bash
+# Register (anyone). Password must be at least 8 characters.
+curl -s -X POST http://127.0.0.1:8000/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"your-secure-password"}'
+
+# Login
+curl -s -X POST http://127.0.0.1:8000/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"you@example.com","password":"your-secure-password"}'
+
+# Current user (pass the access_token from register or login)
+curl -s http://127.0.0.1:8000/auth/me \
+  -H "Authorization: Bearer ACCESS_TOKEN_HERE"
+```
+
+Each user has a unique email (case-insensitive), their own portfolios, and cannot see another user’s portfolios. **Admin** users (`is_admin` on the account) see **all** portfolios in `GET /portfolios` and may call summary, positions, trades, bet, close, and settle on **any** portfolio id or name.
+
+**Admin HTTP API** (requires an admin bearer token)
+
+```bash
+# List users (id, email, is_admin, created_at — no password fields)
+curl -s http://127.0.0.1:8000/admin/users \
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN"
+
+# Create a user (optional is_admin, default false)
+curl -s -X POST http://127.0.0.1:8000/admin/users \
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"newuser@example.com","password":"temporary-password","is_admin":false}'
+
+# Delete a user (cascades portfolios, positions, trades; cannot delete yourself)
+curl -s -X DELETE http://127.0.0.1:8000/admin/users/USER_ID \
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN"
+
+# Reset password
+curl -s -X POST http://127.0.0.1:8000/admin/users/USER_ID/password \
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"password":"new-password-at-least-8-chars"}'
+```
 
 **Health**
 
@@ -122,17 +187,34 @@ Then open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for interacti
 curl -s http://127.0.0.1:8000/health
 ```
 
-**Catalog refresh** (calls live Gamma APIs; full refresh can take a long time)
+**Catalog refresh** (calls live Gamma APIs; **admin JWT** or optional **API key**; full refresh can take a long time)
+
+Either send an **admin** `Authorization: Bearer <token>` (use **Authorize** in `/docs`), or set **`REFRESH_API_KEY`** in server `.env` and pass **`X-Refresh-Api-Key`** with that value. In Swagger, **`X-Refresh-Api-Key` appears as its own field** under the operation so you do not rely on the Authorize dialog for catalog refresh.
 
 ```bash
+export TOKEN='admin_access_token_from_login'
+
 curl -s -X POST http://127.0.0.1:8000/markets/refresh \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{}'
 
 curl -s -X POST http://127.0.0.1:8000/markets/refresh \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"incremental":true}'
 ```
+
+With **`REFRESH_API_KEY`** set:
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/markets/refresh \
+  -H 'X-Refresh-Api-Key: YOUR_REFRESH_API_KEY' \
+  -H 'Content-Type: application/json' \
+  -d '{"incremental":true}'
+```
+
+Log in as an admin (e.g. bootstrap `admin@admin123.com` / `admin123` unless you changed `.env`) to obtain `TOKEN` for the Bearer variant.
 
 **Market data** (`QUERY` is a numeric market id or slug)
 
@@ -160,33 +242,43 @@ Response shape: `{"items":[...],"total":N,"limit":L,"offset":O}`.
 curl -s "http://127.0.0.1:8000/gamma/markets?limit=5&offset=0&active=true&closed=false&accepting_orders=true"
 ```
 
-**Paper trading** (`PORTFOLIO` is a portfolio id or name, for example `1` or `portfolio1`)
+**Paper trading** (`PORTFOLIO` is a portfolio id or name, for example `1` or `portfolio1`). Every request below needs the same bearer token you obtained from `/auth/login` or `/auth/register`.
 
 ```bash
-curl -s http://127.0.0.1:8000/portfolios
+export TOKEN='paste_access_token_here'
+
+curl -s http://127.0.0.1:8000/portfolios \
+  -H "Authorization: Bearer $TOKEN"
 
 curl -s -X POST http://127.0.0.1:8000/portfolios \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"name":"demo","balance":1000}'
 
-curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/summary"
-curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/positions"
-curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/trades"
+curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/summary" \
+  -H "Authorization: Bearer $TOKEN"
+curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/positions" \
+  -H "Authorization: Bearer $TOKEN"
+curl -s "http://127.0.0.1:8000/portfolios/PORTFOLIO/trades" \
+  -H "Authorization: Bearer $TOKEN"
 
 curl -s -X POST "http://127.0.0.1:8000/portfolios/PORTFOLIO/bet" \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"market_id":"MARKET_ID_OR_SLUG","outcome":"Yes","shares":10}'
 
 curl -s -X POST "http://127.0.0.1:8000/portfolios/PORTFOLIO/close" \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"position_id":1,"shares":5}'
 
 curl -s -X POST "http://127.0.0.1:8000/portfolios/PORTFOLIO/settle" \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"position_id":1,"won":true}'
 ```
 
-Invalid input or business-rule failures return **400** with a JSON `detail` string; missing markets return **404**. Bets, closes, and portfolio summaries need live market data where applicable, so run these with network access and valid ids from your seeded database or from Polymarket.
+Portfolio **names** are unique per user (two different users may both use `demo`). Requests without a token return **401**. Accessing another user’s portfolio without admin privileges returns **400** with `portfolio not found` (same message as a missing id, to avoid leaking existence). Invalid input or other business-rule failures return **400** with a JSON `detail` string; missing markets return **404**. Bets, closes, and portfolio summaries need live market data where applicable, so run these with network access and valid ids from your seeded database or from Polymarket.
 
 ---
 
@@ -205,6 +297,7 @@ conn.close()
 Run Python with `PYTHONPATH=src` (or use `pip install -e .` from the repo root). Import:
 
 ```python
+from polymarket.auth import Access
 from polymarket.trading.service import TradingService
 ```
 
@@ -217,47 +310,48 @@ source venv/bin/activate
 python -i scripts/try_paper_trading.py
 ```
 
-That script adds `src` to the path, runs `create_tables` once, and defines **`svc = TradingService(1)`** (the default seeded portfolio). It prints short copy-paste examples; you then type expressions in the REPL (for example `svc.get_portfolio()` or `svc.place_bet("…slug…", "Yes", 1.0)`). Network is required for `place_bet` / `get_positions` / `get_portfolio` when live prices are fetched.
+That script adds `src` to the path, runs `create_tables` once, and defines **`RELAX = Access(1, True)`** and **`svc = TradingService(1, RELAX)`**. The `Access` object carries your user id and whether you are treated as an admin; `RELAX` is a local convenience so the REPL can resolve any portfolio id or name like the HTTP admin user. It prints short copy-paste examples; you then type expressions in the REPL (for example `svc.get_portfolio()` or `svc.place_bet("…slug…", "Yes", 1.0)`). Network is required for `place_bet` / `get_positions` / `get_portfolio` when live prices are fetched.
 
 If you prefer a one-off without `-i`, run a small snippet:
 
 ```bash
 source venv/bin/activate
-PYTHONPATH=src python -c "from polymarket.db import create_tables, get_connection; from polymarket.trading.service import TradingService; c=get_connection(); create_tables(c); c.close(); print(TradingService(1).get_portfolio())"
+PYTHONPATH=src python -c "from polymarket.auth import Access; from polymarket.db import create_tables, get_connection; from polymarket.trading.service import TradingService; c=get_connection(); create_tables(c); c.close(); a=Access(1, True); print(TradingService(1, a).get_portfolio())"
 ```
 
 ### `TradingService.create_portfolio`
 
 ```python
 TradingService.create_portfolio(
+    access: Access,
     name: str | None = None,
     balance: float | None = None,
 ) -> dict[str, Any]
 ```
 
-Creates a new portfolio row. If `balance` is omitted, it uses `PAPER_BALANCE` from settings (default `1000.0` in `polymarket.config`). If `name` is omitted, the name is set to `portfolio` + the new numeric `id` (e.g. `portfolio2`). If `name` is provided, it must be **unique** (comparison is case-insensitive); otherwise `ValueError` with message `portfolio name already exists`.
+Creates a new portfolio row **owned by** `access.user_id`. If `balance` is omitted, it uses `PAPER_BALANCE` from settings (default `1000.0` in `polymarket.config`). If `name` is omitted, the name is set to `portfolio` + the new numeric `id` (e.g. `portfolio2`). If `name` is provided, it must be **unique for that user** (comparison is case-insensitive); otherwise `ValueError` with message `portfolio name already exists`.
 
-**Returns:** `{"id": int, "name": str, "balance": float, "created_at": str}` (ISO timestamp).
+**Returns:** `{"id", "name", "balance", "created_at", "user_id"}` (ISO timestamp on `created_at`).
 
 ### `TradingService.list_portfolios`
 
 ```python
-TradingService.list_portfolios() -> list[dict[str, Any]]
+TradingService.list_portfolios(access: Access) -> list[dict[str, Any]]
 ```
 
-**Returns:** a list of `{"id", "name", "balance", "created_at"}` for every portfolio, ordered by `id`.
+**Returns:** portfolios the caller may see: only rows with matching `user_id`, unless `access.is_admin` is true (then every portfolio, each row includes `user_id`), ordered by `id`.
 
 ### Constructing the service for a portfolio
 
 The portfolio passed to **`TradingService(...)`** is the default for any call. Every mutating and read method can override it with an optional **`portfolio`** argument (id or name): **`get_portfolio`**, **`get_positions`**, **`get_trades`**, **`place_bet`**, **`close_position`**. When omitted, the instance default is used.
 
 ```python
-TradingService.__init__(self, portfolio: int | str) -> None
+TradingService.__init__(self, portfolio: int | str, access: Access) -> None
 ```
 
-`portfolio` is either a numeric **id** (existing row) or a **name** string (case-insensitive match to `portfolios.name`). For digit-only strings, **id is tried first** if a row with that id exists; otherwise the string is treated as a name.
+`portfolio` is either a numeric **id** (existing row) or a **name** string. For non-admins, names are resolved **within that user’s portfolios only**. For admins, name resolution is global (first match by id order). For digit-only strings, **id is tried first** if a row with that id exists; otherwise the string is treated as a name. If the portfolio does not exist or is owned by another user and you are not an admin, you get `ValueError` with message `portfolio not found`.
 
-Examples: `TradingService(1)`, `TradingService("portfolio1")`, `TradingService("MyBook")`.
+Examples: `TradingService(1, Access(1, False))`, `TradingService("portfolio1", Access(1, False))`, `TradingService("MyBook", Access(42, False))`.
 
 ### `place_bet` (buy)
 
@@ -337,6 +431,7 @@ Same optional `portfolio` argument.
 ### Minimal example
 
 ```python
+from polymarket.auth import Access
 from polymarket.db import create_tables, get_connection
 from polymarket.trading.service import TradingService
 
@@ -344,11 +439,12 @@ conn = get_connection()
 create_tables(conn)
 conn.close()
 
-info = TradingService.create_portfolio(name="Practice", balance=500.0)
+me = Access(1, False)
+info = TradingService.create_portfolio(me, name="Practice", balance=500.0)
 pid = info["id"]
-svc = TradingService(pid)
+svc = TradingService(pid, me)
 
-rows = TradingService.list_portfolios()
+rows = TradingService.list_portfolios(me)
 portfolio = svc.get_portfolio()
 same_by_name = svc.get_portfolio("Practice")
 
