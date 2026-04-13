@@ -117,9 +117,30 @@ CREATE TABLE IF NOT EXISTS markets (
 """
 
 
+CREATE_USERS_TABLE_SQLITE = """
+CREATE TABLE IF NOT EXISTS users (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    email           TEXT    NOT NULL UNIQUE,
+    password_hash   TEXT    NOT NULL,
+    is_admin        INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT    NOT NULL
+)
+"""
+
+CREATE_USERS_TABLE_PG = """
+CREATE TABLE IF NOT EXISTS users (
+    id              SERIAL PRIMARY KEY,
+    email           TEXT    NOT NULL UNIQUE,
+    password_hash   TEXT    NOT NULL,
+    is_admin        INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT    NOT NULL
+)
+"""
+
 CREATE_PORTFOLIOS_TABLE_SQLITE = """
 CREATE TABLE IF NOT EXISTS portfolios (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id),
     name        TEXT    NOT NULL,
     balance     REAL    NOT NULL,
     created_at  TEXT    NOT NULL
@@ -128,7 +149,8 @@ CREATE TABLE IF NOT EXISTS portfolios (
 
 CREATE_PORTFOLIOS_TABLE_PG = """
 CREATE TABLE IF NOT EXISTS portfolios (
-    id          SERIAL  PRIMARY KEY,
+    id          SERIAL PRIMARY KEY,
+    user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name        TEXT    NOT NULL,
     balance     DOUBLE PRECISION NOT NULL,
     created_at  TEXT    NOT NULL
@@ -214,6 +236,7 @@ def get_connection(db_path: Path | None = None) -> Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
@@ -224,6 +247,7 @@ def create_tables(conn: Connection) -> None:
         cur = conn.cursor()
         for ddl in (
             CREATE_MARKETS_TABLE,
+            CREATE_USERS_TABLE_PG,
             CREATE_PORTFOLIOS_TABLE_PG,
             CREATE_POSITIONS_TABLE_PG,
             CREATE_TRADES_TABLE_PG,
@@ -234,31 +258,66 @@ def create_tables(conn: Connection) -> None:
     else:
         for ddl in (
             CREATE_MARKETS_TABLE,
+            CREATE_USERS_TABLE_SQLITE,
             CREATE_PORTFOLIOS_TABLE_SQLITE,
             CREATE_POSITIONS_TABLE_SQLITE,
             CREATE_TRADES_TABLE_SQLITE,
         ):
             conn.execute(ddl)
         _migrate_sqlite(conn)
+    _migrate_users_portfolios_user_id(conn)
     _migrate_legacy_portfolio_table(conn)
     _seed_portfolio(conn)
+    _sync_bootstrap_admin_from_env(conn)
     conn.commit()
+
+
+def _sync_bootstrap_admin_from_env(conn: Connection) -> None:
+    em = (settings.admin_bootstrap_email or "").strip()
+    pw = settings.admin_bootstrap_password or ""
+    if not em or not pw:
+        return
+    from polymarket.auth.passwords import hash_password
+    from polymarket.auth.users_db import (
+        fetch_user_by_email,
+        insert_user,
+        normalize_email,
+        update_user_admin,
+        update_user_password,
+    )
+
+    email = normalize_email(em)
+    h = hash_password(pw)
+    row = fetch_user_by_email(conn, email)
+    if row is None:
+        insert_user(conn, email=email, password_hash=h, is_admin=True)
+    else:
+        uid = int(row["id"])
+        update_user_admin(conn, uid, True)
+        update_user_password(conn, uid, h)
 
 
 def _seed_portfolio(conn: Connection) -> None:
     from datetime import datetime, timezone
+
+    from polymarket.auth.users_db import default_owner_user_id
 
     ph = placeholder()
     rows = fetchall(conn, "SELECT COUNT(*) AS c FROM portfolios")
     if int(rows[0]["c"]) > 0:
         return
     now = datetime.now(timezone.utc).isoformat()
+    uid = default_owner_user_id(conn)
     if settings.db_backend == "postgres":
-        ins = f"INSERT INTO portfolios (name, balance, created_at) VALUES ({ph}, {ph}, {ph}) RETURNING id"
-        rid = int(fetchall(conn, ins, ("__pending__", settings.paper_balance, now))[0]["id"])
+        ins = f"INSERT INTO portfolios (user_id, name, balance, created_at) VALUES ({ph}, {ph}, {ph}, {ph}) RETURNING id"
+        rid = int(fetchall(conn, ins, (uid, "__pending__", settings.paper_balance, now))[0]["id"])
         execute(conn, f"UPDATE portfolios SET name = {ph} WHERE id = {ph}", (f"portfolio{rid}", rid))
     else:
-        execute(conn, f"INSERT INTO portfolios (name, balance, created_at) VALUES ({ph}, {ph}, {ph})", ("__pending__", settings.paper_balance, now))
+        execute(
+            conn,
+            f"INSERT INTO portfolios (user_id, name, balance, created_at) VALUES ({ph}, {ph}, {ph}, {ph})",
+            (uid, "__pending__", settings.paper_balance, now),
+        )
         rid = int(fetchall(conn, "SELECT last_insert_rowid() AS id")[0]["id"])
         execute(conn, f"UPDATE portfolios SET name = {ph} WHERE id = {ph}", (f"portfolio{rid}", rid))
 
@@ -284,8 +343,57 @@ def _migrate_portfolio_id_columns_sqlite(conn: sqlite3.Connection) -> None:
             conn.execute(f"UPDATE {table} SET portfolio_id = 1 WHERE portfolio_id IS NULL")
 
 
+def _migrate_users_portfolios_user_id(conn: Connection) -> None:
+    import secrets
+
+    from polymarket.auth.passwords import hash_password
+    from polymarket.auth.users_db import count_users, insert_user, normalize_email
+
+    if settings.db_backend == "postgres":
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'portfolios' AND column_name = 'user_id'
+            """
+        )
+        if cur.fetchone() is None:
+            cur.execute(
+                "ALTER TABLE portfolios ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE"
+            )
+        cur.close()
+    else:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info('portfolios')").fetchall()}
+        if cols and "user_id" not in cols:
+            conn.execute("ALTER TABLE portfolios ADD COLUMN user_id INTEGER REFERENCES users(id)")
+
+    if count_users(conn) == 0:
+        em = (settings.admin_bootstrap_email or "").strip()
+        pw = settings.admin_bootstrap_password or ""
+        if em and pw:
+            insert_user(
+                conn,
+                email=normalize_email(em),
+                password_hash=hash_password(pw),
+                is_admin=True,
+            )
+        else:
+            insert_user(
+                conn,
+                email="system@polysimulator.internal",
+                password_hash=hash_password(secrets.token_urlsafe(32)),
+                is_admin=False,
+            )
+
+    ph = placeholder()
+    uid = int(fetchall(conn, "SELECT id FROM users ORDER BY id ASC LIMIT 1")[0]["id"])
+    execute(conn, f"UPDATE portfolios SET user_id = {ph} WHERE user_id IS NULL", (uid,))
+
+
 def _migrate_legacy_portfolio_table(conn: Connection) -> None:
     from datetime import datetime, timezone
+
+    from polymarket.auth.users_db import default_owner_user_id
 
     ph = placeholder()
     now = datetime.now(timezone.utc).isoformat()
@@ -309,9 +417,10 @@ def _migrate_legacy_portfolio_table(conn: Connection) -> None:
             else:
                 bal = float(settings.paper_balance)
                 created = now
+            uid = int(default_owner_user_id(conn))
             cur.execute(
-                "INSERT INTO portfolios (name, balance, created_at) VALUES (%s, %s, %s) RETURNING id",
-                ("portfolio1", bal, created),
+                "INSERT INTO portfolios (user_id, name, balance, created_at) VALUES (%s, %s, %s, %s) RETURNING id",
+                (uid, "portfolio1", bal, created),
             )
             pid = int(cur.fetchone()["id"])
             cur.execute(
@@ -343,10 +452,11 @@ def _migrate_legacy_portfolio_table(conn: Connection) -> None:
         else:
             bal = float(settings.paper_balance)
             created = now
+        uid = int(default_owner_user_id(conn))
         execute(
             conn,
-            f"INSERT INTO portfolios (name, balance, created_at) VALUES ({ph}, {ph}, {ph})",
-            ("portfolio1", bal, created),
+            f"INSERT INTO portfolios (user_id, name, balance, created_at) VALUES ({ph}, {ph}, {ph}, {ph})",
+            (uid, "portfolio1", bal, created),
         )
         pid = int(fetchall(conn, "SELECT last_insert_rowid() AS id")[0]["id"])
         execute(
