@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -9,7 +10,7 @@ from polymarket import db
 
 
 @pytest.fixture
-def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
+def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Generator[TestClient, None, None]:
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "api.db")
     monkeypatch.setattr(db.settings, "admin_bootstrap_email", "admin@test.local")
     monkeypatch.setattr(db.settings, "admin_bootstrap_password", "password12345")
