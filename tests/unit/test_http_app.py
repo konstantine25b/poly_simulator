@@ -21,7 +21,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(db.settings, "admin_bootstrap_email", "admin@test.local")
     monkeypatch.setattr(db.settings, "admin_bootstrap_password", "password12345")
     monkeypatch.setattr(db.settings, "jwt_secret", "unit-test-jwt-secret")
-    from polymarket.http_app import app
+    from polymarket.http.app import app
 
     with TestClient(app) as tc:
         yield tc
@@ -73,7 +73,7 @@ def test_db_markets_list(client: TestClient) -> None:
     assert any(row.get("id") == "m_api_list" for row in payload["items"])
 
 
-@patch("polymarket.http_app.refresh_catalog")
+@patch("polymarket.http.routers.markets.refresh_catalog")
 def test_refresh_quiet(mock_refresh, client: TestClient) -> None:
     mock_refresh.return_value = {"inserted": 0}
     r = client.post(
@@ -102,7 +102,7 @@ def test_refresh_requires_auth(client: TestClient) -> None:
     assert r.status_code == 401
 
 
-@patch("polymarket.http_app.refresh_catalog")
+@patch("polymarket.http.routers.markets.refresh_catalog")
 def test_refresh_via_x_refresh_api_key(mock_refresh, client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     mock_refresh.return_value = {"inserted": 0}
     monkeypatch.setattr(db.settings, "refresh_api_key", "unit-test-refresh-secret")

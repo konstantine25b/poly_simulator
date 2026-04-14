@@ -124,7 +124,7 @@ For each outcome the order book displays best bid/ask, spread, last trade price,
 
 ## HTTP API (FastAPI)
 
-The same catalog refresh, market lookups, Gamma listing, and paper trading logic exposed by the Python library and CLI scripts is also available over HTTP. The app lives in `src/polymarket/http_app.py`. Authentication helpers (`Access`, password hashing, JWT-style bearer tokens, user persistence) live in `src/polymarket/auth/`. On startup it runs `create_tables` once (same schema as the rest of the project). Terminal scripts such as `scripts/refresh_markets.py` are unchanged; they call the shared `refresh_catalog` helper used by the API. Over HTTP, **`POST /markets/refresh`** is restricted to **admin** accounts only; the CLI scripts are not.
+The same catalog refresh, market lookups, Gamma listing, and paper trading logic exposed by the Python library and CLI scripts is also available over HTTP. The FastAPI app is assembled in `src/polymarket/http/` (routers, dependencies, schemas, lifespan) and re-exported from `src/polymarket/http_app.py` so you can still run `uvicorn polymarket.http_app:app`. Authentication helpers (`Access`, password hashing, JWT-style bearer tokens, user persistence) live in `src/polymarket/auth/`. On startup it runs `create_tables` once (same schema as the rest of the project). Terminal scripts such as `scripts/refresh_markets.py` are unchanged; they call the shared `refresh_catalog` helper used by the API. Over HTTP, **`POST /markets/refresh`** is restricted to **admin** accounts only; the CLI scripts are not.
 
 **Run the server** (from the repo root, with the venv activated):
 
