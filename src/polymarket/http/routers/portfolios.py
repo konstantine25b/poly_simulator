@@ -10,7 +10,7 @@ from polymarket.http.deps import get_access
 from polymarket.http.schemas import BetBody, CloseBody, PortfolioCreateBody, SettleBody
 from polymarket.trading.service import TradingService
 
-router = APIRouter()
+router = APIRouter(tags=["portfolios"])
 
 
 @router.get("/portfolios")

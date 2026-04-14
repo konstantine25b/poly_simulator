@@ -17,8 +17,12 @@ def _parse_list_field(value: object) -> list:
     return []
 
 
+def clob_token_ids_for_market(market: dict[str, Any]) -> list[str]:
+    return [str(t) for t in _parse_list_field(market.get("clobTokenIds"))]
+
+
 def order_books_for_market(market: dict[str, Any]) -> list[dict[str, Any]]:
-    tokens = _parse_list_field(market.get("clobTokenIds"))
+    tokens = clob_token_ids_for_market(market)
     outcomes = _parse_list_field(market.get("outcomes"))
     books: list[dict[str, Any]] = []
     for i, token_id in enumerate(tokens):

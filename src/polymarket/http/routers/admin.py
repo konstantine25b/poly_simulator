@@ -19,7 +19,7 @@ from polymarket.db import get_connection
 from polymarket.http.deps import require_admin
 from polymarket.http.schemas import AdminResetPasswordBody, AdminUserCreateBody, email_ok
 
-router = APIRouter()
+router = APIRouter(tags=["admin"])
 
 
 @router.get("/admin/users")

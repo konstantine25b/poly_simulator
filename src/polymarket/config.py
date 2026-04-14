@@ -13,6 +13,10 @@ class Settings(BaseSettings):
 
     gamma_api_base_url: str = "https://gamma-api.polymarket.com"
     clob_api_base_url: str = "https://clob.polymarket.com"
+    clob_ws_market_url: str = Field(
+        default="wss://ws-subscriptions-clob.polymarket.com/ws/market",
+        validation_alias="CLOB_WS_MARKET_URL",
+    )
 
     log_level: str = "INFO"
     request_timeout: int = 10

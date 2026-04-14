@@ -14,7 +14,7 @@ from polymarket.http.deps import _access_from_bearer, _bearer
 from polymarket.http.schemas import RefreshBody
 from polymarket.refresh_catalog import refresh_catalog
 
-router = APIRouter()
+router = APIRouter(tags=["markets"])
 
 
 @router.post(

@@ -19,7 +19,7 @@ from polymarket.db import get_connection
 from polymarket.http.deps import get_access
 from polymarket.http.schemas import LoginBody, RegisterBody, email_ok
 
-router = APIRouter()
+router = APIRouter(tags=["auth"])
 
 
 @router.post("/auth/register")

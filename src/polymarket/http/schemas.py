@@ -1,10 +1,31 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
 class RefreshBody(BaseModel):
     incremental: bool = False
+
+
+class BestBidAskEvent(BaseModel):
+    event_type: Literal["best_bid_ask"]
+    market: str
+    asset_id: str
+    best_bid: str
+    best_ask: str
+    spread: str
+    timestamp: str
+
+
+class BestBidAskWsDocs(BaseModel):
+    query: str
+    market_id: str
+    slug: str | None = None
+    subscribed_asset_ids: list[str]
+    websocket_path: str
+    message_shape: BestBidAskEvent
 
 
 class PortfolioCreateBody(BaseModel):
