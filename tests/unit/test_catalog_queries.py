@@ -10,11 +10,6 @@ from polymarket.catalog import queries
 from polymarket.db import create_tables, get_connection, upsert_markets
 
 
-@pytest.fixture(autouse=True)
-def force_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(db.settings, "db_backend", "sqlite")
-
-
 @pytest.fixture
 def catalog_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     path = tmp_path / "catalog_queries.db"

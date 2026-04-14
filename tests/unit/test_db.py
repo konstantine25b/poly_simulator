@@ -4,18 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from polymarket import db
 from polymarket.db import (
     _serialize,
     create_tables,
     get_connection,
     upsert_markets,
 )
-
-
-@pytest.fixture(autouse=True)
-def force_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(db.settings, "db_backend", "sqlite")
 
 
 @pytest.fixture
