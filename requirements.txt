@@ -15,7 +15,7 @@ mypy_extensions==1.1.0
 packaging==26.0
 pathspec==1.0.4
 pluggy==1.6.0
--e git+ssh://git@github.com/konstantine25b/poly_simulator.git@5d4f671c8873e051f63d8ae419d62917165b3159#egg=poly_simulator
+-e git+ssh://git@github.com/konstantine25b/poly_simulator.git@61506d86e40f2ab737e74371b171145e94257164#egg=poly_simulator
 psycopg2-binary==2.9.11
 pydantic==2.12.5
 pydantic-settings==2.13.1
