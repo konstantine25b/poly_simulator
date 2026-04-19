@@ -459,3 +459,20 @@ trades = svc.get_trades()
 ```
 
 ---
+
+
+# Web UI (React)
+
+A small **JavaScript** React app in **`frontend/`** talks to the same HTTP API. In development, **Vite** serves the UI and proxies **`/api`** to **`http://127.0.0.1:8000`**, so the API must be listening on port **8000** (or change both `frontend/vite.config.js` and your `uvicorn` port to match).
+
+**Start the frontend** (from the repo root; [Node.js](https://nodejs.org/) 18 or newer matches the pinned Vite 6 toolchain):
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+(`npm start` is the same command: it runs the Vite dev server.)
+
+Open the URL Vite prints in the terminal, usually [http://127.0.0.1:5173](http://127.0.0.1:5173). The UI calls **`/api/health`**, **`/api/auth/login`**, and **`/api/db/markets`** via the proxy. Log in with a user that exists in your database (for example the bootstrap admin from `.env` if you use the defaults). Use **`npm run build`** to produce static files under **`frontend/dist/`**; for that build, set environment variable **`VITE_API_URL`** to the full API origin (for example `https://api.example.com`, no trailing slash) so the browser can reach the API. If the UI and API are on different origins, configure **CORS** on the API for your UI origin.

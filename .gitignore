@@ -66,3 +66,7 @@ htmlcov/
 # Type checking
 .mypy_cache/
 .pyright/
+
+# Node (React frontend)
+frontend/node_modules/
+frontend/dist/
