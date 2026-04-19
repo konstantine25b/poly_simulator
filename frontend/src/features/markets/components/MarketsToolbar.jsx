@@ -9,15 +9,36 @@ const SORT_OPTIONS = [
   ["start_asc", "Start date (oldest first)"],
 ];
 
-export function MarketsToolbar({ qInput, onQInput, filter, onFilter, sort, onSort, pageSize, onPageSize }) {
+export function MarketsToolbar({
+  qInput,
+  onQInput,
+  gammaInput,
+  onGammaInput,
+  filter,
+  onFilter,
+  sort,
+  onSort,
+  pageSize,
+  onPageSize,
+}) {
   return (
     <div className="mkt-toolbar">
+      <label className="mkt-search-lbl">Catalog (database)</label>
       <input
         className="mkt-search"
         type="search"
-        placeholder="Search markets…"
+        placeholder="Search question or slug in your DB…"
         value={qInput}
         onChange={(ev) => onQInput(ev.target.value)}
+        autoComplete="off"
+      />
+      <label className="mkt-search-lbl mkt-search-lbl-gamma">Polymarket (Gamma API)</label>
+      <input
+        className="mkt-search"
+        type="search"
+        placeholder="Exact market id (digits) or slug…"
+        value={gammaInput}
+        onChange={(ev) => onGammaInput(ev.target.value)}
         autoComplete="off"
       />
       <div className="mkt-toolbar-row mkt-toolbar-sort">

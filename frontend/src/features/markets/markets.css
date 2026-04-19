@@ -36,6 +36,18 @@
   gap: 0.75rem;
 }
 
+.mkt-search-lbl {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8b96a8;
+}
+
+.mkt-search-lbl-gamma {
+  margin-top: 0.35rem;
+}
+
 .mkt-search {
   width: 100%;
   max-width: none;
@@ -121,6 +133,25 @@
 
 .mkt-main {
   margin-top: 1.25rem;
+}
+
+.mkt-gamma-panel {
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid #2a3f5c;
+  background: #101820;
+}
+
+.mkt-gamma-head {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #9db4d8;
+  margin-bottom: 0.5rem;
+}
+
+.mkt-list-gamma {
+  margin-top: 0.35rem;
 }
 
 .mkt-state {
@@ -226,9 +257,9 @@
   font-size: 0.65rem;
   color: #6b7a90;
   margin-top: 0.15rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .mkt-dates {

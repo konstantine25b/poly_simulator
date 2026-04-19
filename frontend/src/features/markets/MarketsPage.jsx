@@ -14,6 +14,11 @@ export function MarketsPage() {
     setSort,
     qInput,
     setQInput,
+    gammaInput,
+    setGammaInput,
+    gammaMarket,
+    gammaLoading,
+    gammaErr,
     pageSize,
     setPageSize,
     page,
@@ -32,6 +37,8 @@ export function MarketsPage() {
       <MarketsToolbar
         qInput={qInput}
         onQInput={setQInput}
+        gammaInput={gammaInput}
+        onGammaInput={setGammaInput}
         filter={filter}
         onFilter={setFilter}
         sort={sort}
@@ -40,6 +47,18 @@ export function MarketsPage() {
         onPageSize={setPageSize}
       />
       <main className="mkt-main">
+        {gammaInput.trim() ? (
+          <section className="mkt-gamma-panel" aria-label="Polymarket lookup">
+            <div className="mkt-gamma-head">Gamma lookup</div>
+            {gammaLoading ? <div className="mkt-state">Loading from Polymarket…</div> : null}
+            {gammaErr ? <div className="mkt-state mkt-err">{gammaErr}</div> : null}
+            {!gammaLoading && !gammaErr && gammaMarket ? (
+              <div className="mkt-list mkt-list-gamma">
+                <MarketCard market={gammaMarket} />
+              </div>
+            ) : null}
+          </section>
+        ) : null}
         {loading ? <div className="mkt-state">Loading markets…</div> : null}
         {err ? <div className="mkt-state mkt-err">{err}</div> : null}
         {!loading && !err && items.length === 0 ? <div className="mkt-state">No markets match.</div> : null}
