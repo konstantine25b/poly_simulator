@@ -80,6 +80,37 @@ class TestListMarketsFromDb:
         huge = queries.list_markets_from_db(limit=9999, offset=0)
         assert huge["limit"] == 500
 
+    def test_sort_volume_desc(self, catalog_db: Path) -> None:
+        conn = get_connection()
+        upsert_markets(
+            conn,
+            [
+                {
+                    "id": "m_lo",
+                    "question": "Low vol",
+                    "slug": "low-vol",
+                    "active": 1,
+                    "closed": 0,
+                    "createdAt": "2021-01-01T00:00:00Z",
+                    "volumeNum": 10.0,
+                    "outcomes": '["Y"]',
+                },
+                {
+                    "id": "m_hi",
+                    "question": "High vol",
+                    "slug": "high-vol",
+                    "active": 1,
+                    "closed": 0,
+                    "createdAt": "2020-01-01T00:00:00Z",
+                    "volumeNum": 999.0,
+                    "outcomes": '["Y"]',
+                },
+            ],
+        )
+        conn.close()
+        out = queries.list_markets_from_db(sort="volume_desc", limit=10, offset=0)
+        assert [r["id"] for r in out["items"]] == ["m_hi", "m_lo"]
+
 
 class TestMarketFromDb:
     def test_by_id_and_slug(self, catalog_db: Path) -> None:

@@ -50,8 +50,11 @@ def get_db_markets(
     active: bool | None = None,
     closed: bool | None = None,
     q: str | None = None,
+    sort: str | None = None,
 ) -> dict[str, Any]:
-    return list_markets_from_db(limit=limit, offset=offset, active=active, closed=closed, q=q)
+    return list_markets_from_db(
+        limit=limit, offset=offset, active=active, closed=closed, q=q, sort=sort
+    )
 
 
 @router.get("/markets/{query}/live")
