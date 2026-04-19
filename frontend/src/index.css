@@ -8,6 +8,8 @@ body {
   line-height: 1.45;
   background: #0c0f12;
   color: #e7eaee;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 #root {

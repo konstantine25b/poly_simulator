@@ -2,14 +2,8 @@ export const DETAIL_SECTIONS = [
   ["Identity", ["id", "question", "slug", "conditionId", "questionID", "marketType"]],
   ["Dates", ["startDate", "endDate", "startDateIso", "endDateIso", "createdAt", "updatedAt", "closedTime", "acceptingOrdersTimestamp"]],
   ["Status", ["active", "closed", "acceptingOrders", "enableOrderBook", "restricted", "archived", "featured", "negRisk", "resolvedBy"]],
-  ["Prices", ["lastTradePrice", "bestBid", "bestAsk", "spread", "oneDayPriceChange", "oneWeekPriceChange", "oneMonthPriceChange"]],
   ["Volume & liquidity", ["volumeNum", "liquidityNum", "volume24hr", "volume1wk", "volume1mo", "volume1yr", "volumeClob", "liquidityClob"]],
-  ["Outcomes", ["outcomes", "outcomePrices", "clobTokenIds"]],
-  ["Event", ["event_title", "event_slug"]],
   ["Description", ["description"]],
-  ["Resolution", ["resolutionSource", "umaBond", "umaReward"]],
-  ["Rewards & orders", ["rewardsMinSize", "rewardsMaxSpread", "orderPriceMinTickSize", "orderMinSize"]],
-  ["Other", ["image", "icon", "category", "tags"]],
 ];
 
 export function formatDetailValue(value) {

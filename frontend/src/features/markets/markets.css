@@ -1,39 +1,77 @@
 .mkt-app {
-  max-width: 1280px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 1.25rem 1rem 2.5rem;
+  padding: 1.35rem clamp(0.85rem, 3.5vw, 1.35rem) 2.75rem;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.mkt-hero {
+  margin-bottom: 0.25rem;
+}
+
+.mkt-hero-card {
+  padding: 1.1rem clamp(0.9rem, 3vw, 1.35rem);
+  border-radius: 14px;
+  border: 1px solid rgba(45, 58, 75, 0.85);
+  background: linear-gradient(165deg, rgba(22, 30, 44, 0.55) 0%, rgba(14, 18, 26, 0.82) 100%);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .mkt-hero-brand {
   display: flex;
-  gap: 1rem;
-  align-items: flex-start;
+  gap: 0.85rem clamp(0.75rem, 2.5vw, 1.1rem);
+  align-items: center;
+  min-width: 0;
+}
+
+@media (max-width: 420px) {
+  .mkt-hero-brand {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.mkt-hero-copy {
+  min-width: 0;
+  flex: 1;
 }
 
 .mkt-hero-logo {
-  border-radius: 10px;
+  border-radius: 11px;
   flex-shrink: 0;
+  border: 1px solid rgba(58, 74, 94, 0.55);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .mkt-hero-title {
-  margin: 0 0 0.35rem;
-  font-size: 1.65rem;
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.35rem, 2.8vw, 1.7rem);
   font-weight: 650;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: #f4f7fb;
 }
 
 .mkt-hero-sub {
   margin: 0;
   color: #8b96a8;
-  font-size: 0.95rem;
-  max-width: 52ch;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  max-width: 56ch;
 }
 
 .mkt-toolbar {
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  padding: 1.05rem clamp(0.85rem, 3vw, 1.25rem);
+  border-radius: 14px;
+  border: 1px solid rgba(45, 58, 75, 0.85);
+  background: rgba(16, 22, 30, 0.75);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
+  min-width: 0;
 }
 
 .mkt-search-lbl {
@@ -51,12 +89,19 @@
 .mkt-search {
   width: 100%;
   max-width: none;
-  padding: 0.65rem 0.9rem;
+  padding: 0.7rem 1rem;
   border-radius: 10px;
-  border: 1px solid #2a3340;
-  background: #141a22;
+  border: 1px solid #2f3a4a;
+  background: #10161e;
   color: inherit;
   font: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mkt-search:focus {
+  outline: none;
+  border-color: #4d7fd4;
+  box-shadow: 0 0 0 2px rgba(77, 127, 212, 0.2);
 }
 
 .mkt-search::placeholder {
@@ -68,11 +113,33 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .mkt-toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mkt-pagesize {
+    justify-content: space-between;
+  }
+}
+
+.mkt-sort-lbl,
+.mkt-pagesize-lbl {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7a90;
 }
 
 .mkt-toolbar-sort {
   justify-content: flex-start;
+  width: 100%;
 }
 
 .mkt-sort {
@@ -81,11 +148,22 @@
   gap: 0.5rem;
   color: #8b96a8;
   font-size: 0.875rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+@media (max-width: 560px) {
+  .mkt-sort {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
 }
 
 .mkt-sort-select {
   font: inherit;
-  min-width: 200px;
+  min-width: 0;
+  flex: 1 1 10rem;
+  max-width: 100%;
   padding: 0.45rem 0.6rem;
   border-radius: 8px;
   border: 1px solid #2a3340;
@@ -95,7 +173,9 @@
 
 .mkt-filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .mkt-filter {
@@ -106,6 +186,15 @@
   border: 1px solid #2a3340;
   background: #141a22;
   color: #b4c0d4;
+  flex: 1 1 auto;
+  text-align: center;
+  min-width: 0;
+}
+
+@media (min-width: 561px) {
+  .mkt-filter {
+    flex: 0 1 auto;
+  }
 }
 
 .mkt-filter.on {
@@ -120,10 +209,12 @@
   gap: 0.5rem;
   color: #8b96a8;
   font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .mkt-pagesize select {
   font: inherit;
+  min-width: 0;
   padding: 0.4rem 0.6rem;
   border-radius: 8px;
   border: 1px solid #2a3340;
@@ -132,15 +223,16 @@
 }
 
 .mkt-main {
-  margin-top: 1.25rem;
+  margin-top: 1.35rem;
 }
 
 .mkt-gamma-panel {
-  margin-bottom: 1.25rem;
-  padding: 0.75rem 0.85rem;
-  border-radius: 10px;
-  border: 1px solid #2a3f5c;
-  background: #101820;
+  margin-bottom: 1.35rem;
+  padding: 1rem 1.15rem;
+  border-radius: 14px;
+  border: 1px solid rgba(45, 58, 75, 0.85);
+  background: rgba(14, 18, 26, 0.85);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .mkt-gamma-head {
@@ -167,13 +259,13 @@
   text-decoration: none;
   color: inherit;
   display: block;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .mkt-list {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.65rem;
+  gap: 0.85rem;
   align-items: stretch;
 }
 
@@ -192,12 +284,13 @@
 .mkt-card {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
   min-width: 0;
-  background: #121820;
-  border: 1px solid #232d3b;
-  border-radius: 10px;
-  padding: 0.65rem 0.7rem;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(22, 30, 42, 0.65) 0%, rgba(14, 18, 26, 0.92) 100%);
+  border: 1px solid rgba(45, 58, 75, 0.75);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease,
@@ -206,15 +299,15 @@
 }
 
 .mkt-card:hover {
-  border-color: #3a4a5e;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  border-color: rgba(77, 127, 212, 0.45);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.38);
   transform: translateY(-2px);
-  background: #151d28;
+  background: linear-gradient(180deg, rgba(28, 38, 54, 0.75) 0%, rgba(18, 24, 34, 0.95) 100%);
 }
 
 .mkt-card-head {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.65rem;
   align-items: flex-start;
   min-width: 0;
 }
@@ -225,12 +318,13 @@
 }
 
 .mkt-thumb-wrap {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   overflow: hidden;
   background: #1a2230;
   flex-shrink: 0;
+  border: 1px solid rgba(58, 74, 94, 0.5);
 }
 
 .mkt-thumb {
@@ -244,20 +338,22 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.35rem;
+  gap: 0.4rem;
   min-width: 0;
 }
 
 .mkt-title {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #f2f5f9;
-  line-height: 1.25;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
 }
 
 .mkt-slug {
@@ -265,14 +361,21 @@
   color: #6b7a90;
   margin-top: 0.15rem;
   line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .mkt-dates {
-  font-size: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.35rem;
+  font-size: 0.68rem;
   color: #8b96a8;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .mkt-dates-sep {
@@ -297,32 +400,38 @@
   font-weight: 600;
   color: #c5d0e0;
   font-size: 0.72rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid rgba(42, 52, 68, 0.85);
 }
 
 .mkt-odds {
   list-style: none;
-  margin: 0.15rem 0 0;
-  padding: 0;
+  margin: 0.1rem 0 0;
+  padding: 0.35rem 0 0;
+  border-top: 1px solid rgba(42, 52, 68, 0.85);
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.28rem;
 }
 
 .mkt-odds-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 0.35rem;
+  gap: 0.5rem 0.75rem;
   font-size: 0.68rem;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .mkt-odds-lbl {
   color: #9aa8bc;
   min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
 }
 
 .mkt-odds-val {
@@ -330,6 +439,8 @@
   color: #7cb8ff;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
+  align-self: start;
+  padding-top: 0.05rem;
 }
 
 .mkt-odds-more {
@@ -338,25 +449,50 @@
 }
 
 .mkt-pager {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #232d3b;
+  margin-top: 1.65rem;
+  padding: 1.1rem clamp(0.85rem, 3vw, 1.15rem);
+  border-radius: 12px;
+  border: 1px solid rgba(45, 58, 75, 0.75);
+  background: rgba(14, 18, 26, 0.55);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.85rem;
+  min-width: 0;
 }
 
 .mkt-pager-info {
   font-size: 0.875rem;
   color: #8b96a8;
+  min-width: 0;
+  flex: 1 1 12rem;
+  overflow-wrap: anywhere;
 }
 
 .mkt-pager-btns {
   display: flex;
   align-items: center;
   gap: 0.65rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 480px) {
+  .mkt-pager {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mkt-pager-btns {
+    justify-content: space-between;
+  }
+
+  .mkt-pager-page {
+    text-align: center;
+    flex: 1 1 auto;
+  }
 }
 
 .mkt-navbtn {

@@ -200,8 +200,9 @@ export function MarketDetailPage() {
                 })
                 .filter(Boolean);
               if (rows.length === 0) return null;
+              const full = title === "Description";
               return (
-                <section key={title} className="md-panel">
+                <section key={title} className={`md-panel${full ? " md-panel-full" : ""}`}>
                   <h2 className="md-panel-title md-panel-title-inline">{title}</h2>
                   <dl className="md-dl">{rows}</dl>
                 </section>

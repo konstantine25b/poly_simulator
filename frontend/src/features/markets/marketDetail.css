@@ -1,9 +1,11 @@
 .md-page {
   position: relative;
-  max-width: 880px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 1.25rem 1.25rem 3rem;
+  padding: 1.35rem clamp(0.85rem, 4vw, 1.5rem) 3rem;
   min-height: 100vh;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .md-bg {
@@ -134,9 +136,10 @@
 .md-hero-inner {
   position: relative;
   display: flex;
-  gap: 1.25rem;
-  padding: 1.35rem 1.4rem;
+  gap: 1rem clamp(0.85rem, 3vw, 1.35rem);
+  padding: 1.25rem clamp(1rem, 3.5vw, 1.45rem);
   align-items: flex-start;
+  min-width: 0;
 }
 
 @media (max-width: 520px) {
@@ -184,12 +187,14 @@
 
 .md-title {
   margin: 0 0 0.65rem;
-  font-size: clamp(1.15rem, 3.5vw, 1.5rem);
+  font-size: clamp(1.1rem, 3.2vw, 1.48rem);
   font-weight: 700;
   line-height: 1.28;
   letter-spacing: -0.02em;
   color: #f4f7fb;
   text-wrap: balance;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .md-meta {
@@ -203,6 +208,7 @@
   display: inline-flex;
   align-items: center;
   max-width: 100%;
+  min-width: 0;
   padding: 0.28rem 0.55rem;
   border-radius: 8px;
   font-size: 0.72rem;
@@ -213,14 +219,26 @@
 }
 
 .md-chip code {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #c5d8f0;
   background: transparent;
+  display: inline-block;
+  max-width: min(100%, 18rem);
+  overflow-x: auto;
+  vertical-align: bottom;
+  scrollbar-width: thin;
+}
+
+.md-chip-id {
+  max-width: 100%;
 }
 
 .md-chip-slug {
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: #aabdd9;
 }
@@ -242,6 +260,9 @@
   border: 1px solid #2f3d50;
   background: rgba(18, 24, 32, 0.9);
   color: #c5d0e0;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .md-badge-dot {
@@ -276,9 +297,20 @@
 }
 
 .md-panels {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 880px) {
+  .md-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+.md-panel-full {
+  grid-column: 1 / -1;
 }
 
 .md-panel {
@@ -286,8 +318,9 @@
   border: 1px solid rgba(45, 58, 75, 0.85);
   background: rgba(18, 24, 32, 0.65);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
-  padding: 1rem 1.15rem 0.85rem;
+  padding: 1.05rem 1.2rem 0.95rem;
   backdrop-filter: blur(6px);
+  min-width: 0;
 }
 
 .md-quotes-section {
@@ -300,14 +333,23 @@
 
 .md-panel-head-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.65rem 0.85rem;
   flex-wrap: wrap;
   margin-bottom: 0.2rem;
+  min-width: 0;
+}
+
+.md-panel-head-row .md-live-pill,
+.md-panel-head-row .md-live-pill-muted,
+.md-panel-head-row .md-live-pill-warn {
+  flex-shrink: 0;
 }
 
 .md-panel-head-row .md-panel-title {
+  flex: 1 1 8rem;
+  min-width: 0;
   margin-bottom: 0;
 }
 
@@ -374,11 +416,13 @@
   margin: 0;
   font-size: 0.78rem;
   color: #6b7a90;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .md-quotes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
   gap: 0.65rem;
 }
 
@@ -390,11 +434,16 @@
 }
 
 .md-quote-outcome {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #e2eaf5;
   margin-bottom: 0.65rem;
-  line-height: 1.3;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .md-quote-pair {
@@ -419,10 +468,12 @@
 }
 
 .md-quote-val {
-  font-size: 1.05rem;
+  font-size: clamp(0.82rem, 2.6vw, 1.05rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .md-quote-bid {
@@ -441,14 +492,16 @@
 
 .md-dl {
   margin: 0;
+  min-width: 0;
 }
 
 .md-row {
   display: grid;
-  grid-template-columns: minmax(100px, 180px) 1fr;
-  gap: 0.5rem 1rem;
-  padding: 0.5rem 0.35rem;
-  margin: 0 -0.35rem;
+  grid-template-columns: minmax(0, min(42%, 11rem)) minmax(0, 1fr);
+  gap: 0.45rem 0.75rem;
+  align-items: baseline;
+  padding: 0.55rem 0.4rem;
+  margin: 0 -0.4rem;
   border-radius: 8px;
   font-size: 0.8rem;
   transition: background 0.12s ease;
@@ -467,13 +520,18 @@
     grid-template-columns: 1fr;
     gap: 0.2rem;
   }
+
+  .md-dt {
+    text-align: left;
+  }
 }
 
 .md-dt {
   margin: 0;
   color: #8b9cb0;
   font-weight: 600;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
+  text-align: right;
 }
 
 .md-dd {
@@ -481,15 +539,20 @@
   color: #e8edf4;
   min-width: 0;
   line-height: 1.45;
+  text-align: left;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .md-pre {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  word-break: break-word;
   font-size: 0.72rem;
   line-height: 1.45;
   max-height: 18rem;
+  max-width: 100%;
   overflow: auto;
   background: rgba(8, 10, 14, 0.85);
   padding: 0.55rem 0.65rem;
