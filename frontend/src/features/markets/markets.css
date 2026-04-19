@@ -163,6 +163,13 @@
   color: #f5a0a0;
 }
 
+.mkt-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  border-radius: 10px;
+}
+
 .mkt-list {
   display: grid;
   grid-template-columns: 1fr;

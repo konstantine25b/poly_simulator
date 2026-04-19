@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import polymarketMark from "../../../../assets/polymarket.jpg";
 import { outcomePairs } from "../domain/outcomes.js";
 import { shouldShowLiveBadge } from "../domain/liveBadge.js";
@@ -22,8 +23,10 @@ export function MarketCard({ market }) {
   const pairs = outcomePairs(market);
   const shown = pairs.slice(0, OUTCOME_CAP);
   const rest = pairs.length - shown.length;
+  const refRaw = slug || id || "";
+  const detailEnc = refRaw ? encodeURIComponent(refRaw) : "";
 
-  return (
+  const inner = (
     <article className="mkt-card">
       <div className="mkt-card-head">
         <div className="mkt-thumb-wrap">
@@ -74,5 +77,13 @@ export function MarketCard({ market }) {
       ) : null}
       {rest > 0 ? <div className="mkt-odds-more">+{rest} more</div> : null}
     </article>
+  );
+
+  return detailEnc ? (
+    <Link className="mkt-card-link" to={`/m/${detailEnc}`}>
+      {inner}
+    </Link>
+  ) : (
+    inner
   );
 }

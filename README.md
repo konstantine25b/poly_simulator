@@ -135,7 +135,7 @@ uvicorn polymarket.http_app:app --reload --host 0.0.0.0 --port 8000
 
 Then open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) for interactive Swagger UI, or call endpoints with `curl` as below (replace the host or port if you changed them). For protected routes, use **Authorize** (lock icon), choose **HTTPBearer**, and paste only the token value (Swagger adds the `Bearer ` prefix). You get a token from **POST /auth/login** or **POST /auth/register** (`access_token` in the JSON body).
 
-Public routes (no bearer token): **`/health`**, **`/markets/{query}/*`**, **`/db/markets`**, **`/gamma/markets`**, **`/auth/register`**, **`/auth/login`**. **`POST /markets/refresh`** requires an **admin** JWT **or** a matching **`X-Refresh-Api-Key`** when **`REFRESH_API_KEY`** is set in server env. **All `/portfolios` routes** and **`/auth/me`** require an `Authorization: Bearer <token>` header from login or register.
+Public routes (no bearer token): **`/health`**, **`/markets/{query}/*`** (including **`GET /markets/{query}/detail`** for a full market payload plus per-token **best bid / best ask** when open, or DB-only when closed), **`/db/markets`**, **`/gamma/markets`**, **`/auth/register`**, **`/auth/login`**. **`POST /markets/refresh`** requires an **admin** JWT **or** a matching **`X-Refresh-Api-Key`** when **`REFRESH_API_KEY`** is set in server env. **All `/portfolios` routes** and **`/auth/me`** require an `Authorization: Bearer <token>` header from login or register.
 
 **Authentication**
 
@@ -220,6 +220,7 @@ Log in as an admin (e.g. bootstrap `admin@admin123.com` / `admin123` unless you 
 
 ```bash
 curl -s "http://127.0.0.1:8000/markets/QUERY/live"
+curl -s "http://127.0.0.1:8000/markets/QUERY/detail"
 curl -s "http://127.0.0.1:8000/markets/QUERY/cached"
 curl -s "http://127.0.0.1:8000/markets/QUERY/resolved"
 curl -s "http://127.0.0.1:8000/markets/QUERY/full"
@@ -476,4 +477,4 @@ npm run dev
 
 (`npm start` is the same command: it runs the Vite dev server.)
 
-Open the URL Vite prints in the terminal, usually [http://127.0.0.1:5173](http://127.0.0.1:5173). The UI is a **markets browse** page: it loads **`GET /db/markets`** (via the dev proxy as **`/api/db/markets`**) for a **catalog** substring search (question and slug in your DB), plus **All / Active / Closed** filters, optional **`sort`**, and pagination (**50** or **100** per page). A second field calls **`GET /markets/{query}/live`** as **`/api/markets/.../live`** for an **exact Gamma lookup** by numeric **id** or **slug** (live Polymarket data, not the local DB). The grid uses **3-column** compact cards (hover, **Live** when `active`, not `closed`, not past **end** time, **volumeNum**, **outcomes** + **outcomePrices**). UI code lives under **`frontend/src/features/markets/`**. The Polymarket mark in **`frontend/assets/`** is the favicon and fallback image. Use **`npm run build`** and **`VITE_API_URL`** when not using the Vite proxy; configure **CORS** if UI and API differ by origin.
+Open the URL Vite prints in the terminal, usually [http://127.0.0.1:5173](http://127.0.0.1:5173). The UI is a **markets browse** page: it loads **`GET /db/markets`** (via the dev proxy as **`/api/db/markets`**) for a **catalog** substring search (question and slug in your DB), plus **All / Active / Closed** filters, optional **`sort`**, and pagination (**50** or **100** per page). A second field calls **`GET /markets/{query}/live`** as **`/api/markets/.../live`** for an **exact Gamma lookup** by numeric **id** or **slug** (live Polymarket data, not the local DB). Each catalog card links to **`/m/{id-or-slug}`**, which loads **`GET /markets/{query}/detail`** (`closed` → full row from the **database**; open → **live** Gamma market plus **best bid / best ask** per outcome token from the CLOB book, no full order book). The grid uses **3-column** compact cards (hover, **Live** when `active`, not `closed`, not past **end** time, **volumeNum**, **outcomes** + **outcomePrices**). UI code lives under **`frontend/src/features/markets/`** (uses **`react-router-dom`**). The Polymarket mark in **`frontend/assets/`** is the favicon and fallback image. Use **`npm run build`** and **`VITE_API_URL`** when not using the Vite proxy; configure **CORS** if UI and API differ by origin.

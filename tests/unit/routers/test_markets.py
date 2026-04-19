@@ -74,3 +74,25 @@ def test_refresh_via_x_refresh_api_key(
     assert r.status_code == 200
     assert r.json() == {"inserted": 0}
     mock_refresh.assert_called_once_with(incremental=False, quiet=True)
+
+
+@patch("polymarket.http.routers.markets.market_detail_payload")
+def test_market_detail_endpoint(mock_payload, client: TestClient) -> None:
+    mock_payload.return_value = {
+        "closed": True,
+        "source": "database",
+        "market": {"id": "1", "question": "Q"},
+        "best_quotes": [],
+    }
+    r = client.get("/markets/1/detail")
+    assert r.status_code == 200
+    assert r.json()["closed"] is True
+    assert r.json()["source"] == "database"
+    mock_payload.assert_called_once_with("1")
+
+
+@patch("polymarket.http.routers.markets.market_detail_payload")
+def test_market_detail_404(mock_payload, client: TestClient) -> None:
+    mock_payload.side_effect = ValueError("market not found")
+    r = client.get("/markets/nope/detail")
+    assert r.status_code == 404

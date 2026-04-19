@@ -1,6 +1,18 @@
+from typing import Any
+
 import httpx
 
 from polymarket.api.client import PolymarketClient, clob_client
+
+
+def best_bid_ask_from_order_book(book: dict | None) -> dict[str, Any]:
+    if not book or not isinstance(book, dict):
+        return {"best_bid": None, "best_ask": None}
+    bids = sorted(book.get("bids", []), key=lambda x: float(x["price"]), reverse=True)
+    asks = sorted(book.get("asks", []), key=lambda x: float(x["price"]))
+    best_bid = float(bids[0]["price"]) if bids else None
+    best_ask = float(asks[0]["price"]) if asks else None
+    return {"best_bid": best_bid, "best_ask": best_ask}
 
 
 def get_order_book(token_id: str, client: PolymarketClient | None = None) -> dict | None:

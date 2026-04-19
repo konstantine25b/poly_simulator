@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
 from polymarket.api.markets import fetch_market, get_markets
+from polymarket.catalog.market_detail import market_detail_payload
 from polymarket.catalog.order_books import order_books_for_market
 from polymarket.catalog.queries import list_markets_from_db, market_from_db, resolve_market_live_or_db
 from polymarket.config import settings
@@ -55,6 +56,14 @@ def get_db_markets(
     return list_markets_from_db(
         limit=limit, offset=offset, active=active, closed=closed, q=q, sort=sort
     )
+
+
+@router.get("/markets/{query}/detail")
+def get_market_detail(query: str) -> dict[str, Any]:
+    try:
+        return market_detail_payload(query)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.get("/markets/{query}/live")

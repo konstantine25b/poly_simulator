@@ -1,0 +1,171 @@
+.md-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 2.5rem;
+}
+
+.md-nav {
+  margin-bottom: 1rem;
+}
+
+.md-back {
+  color: #7cb8ff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.md-back:hover {
+  text-decoration: underline;
+}
+
+.md-state {
+  color: #8b96a8;
+}
+
+.md-state.md-err {
+  color: #f5a0a0;
+}
+
+.md-head {
+  margin-bottom: 1.5rem;
+}
+
+.md-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 650;
+  line-height: 1.25;
+  color: #f2f5f9;
+}
+
+.md-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.md-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #2a3340;
+  background: #141a22;
+  color: #c5d0e0;
+}
+
+.md-badge-closed {
+  background: #3a2020;
+  border-color: #6a3535;
+  color: #f0a8a8;
+}
+
+.md-badge-open {
+  background: #143d28;
+  border-color: #2a5c40;
+  color: #5ee9a8;
+}
+
+.md-badge-src {
+  border-color: #3d4a5c;
+}
+
+.md-badge-stale {
+  background: #3a3520;
+  border-color: #6a6035;
+  color: #f0e0a8;
+}
+
+.md-slug {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #9aa8bc;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.md-slug-lbl {
+  color: #6b7a90;
+  margin-right: 0.35rem;
+}
+
+.md-section {
+  margin-bottom: 1.5rem;
+}
+
+.md-h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8b96a8;
+}
+
+.md-dl {
+  margin: 0;
+}
+
+.md-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) 1fr;
+  gap: 0.5rem 1rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #1e2733;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 560px) {
+  .md-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.md-dt {
+  margin: 0;
+  color: #7c8a9e;
+  font-weight: 500;
+}
+
+.md-dd {
+  margin: 0;
+  color: #e7eaee;
+  min-width: 0;
+}
+
+.md-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  max-height: 20rem;
+  overflow: auto;
+  background: #0c1016;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #232d3b;
+}
+
+.md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.md-table th,
+.md-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #232d3b;
+}
+
+.md-table th {
+  color: #8b96a8;
+  font-weight: 600;
+}
+
+.md-table td {
+  color: #e7eaee;
+}
