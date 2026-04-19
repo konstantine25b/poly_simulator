@@ -5,59 +5,22 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  line-height: 1.5;
-  color: #e8eaed;
-  background: #0f1419;
+  background: #fafafa;
 }
 
 #root {
   min-height: 100vh;
 }
 
-a {
-  color: #7cb8ff;
+.shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  background: #2d6cdf;
-  color: #fff;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-input {
-  font: inherit;
-  border-radius: 8px;
-  border: 1px solid #3d4a5c;
-  padding: 0.5rem 0.75rem;
-  background: #1a2332;
-  color: inherit;
-  width: 100%;
-  max-width: 280px;
-}
-
-.card {
-  background: #1a2332;
-  border: 1px solid #2a3544;
-  border-radius: 12px;
-  padding: 1.25rem;
-  max-width: 640px;
-}
-
-.muted {
-  color: #9aa5b5;
-  font-size: 0.875rem;
-}
-
-.err {
-  color: #f88;
-  margin-top: 0.5rem;
+.mark {
+  display: block;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(15, 20, 25, 0.08);
 }
