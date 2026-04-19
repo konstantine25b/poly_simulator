@@ -14,3 +14,11 @@ export function formatDate(raw) {
   if (Number.isNaN(d.getTime())) return null;
   return new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(d);
 }
+
+export function formatOutcomeOdds(raw) {
+  const n = Number(raw);
+  if (Number.isNaN(n)) return null;
+  const p = n >= 0 && n <= 1 ? n * 100 : n;
+  if (p >= 10 || p === Math.floor(p)) return `${Math.round(p)}%`;
+  return `${p.toFixed(1)}%`;
+}
