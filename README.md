@@ -227,11 +227,12 @@ curl -s "http://127.0.0.1:8000/markets/QUERY/full"
 
 The `resolved` route tries the live API first, then the local database, and sets `stale` when only cached data is available. The `full` route adds one CLOB order book per outcome token (network required).
 
-**List markets from the local database** (paged; optional `active`, `closed`, and `q` substring filter on question and slug; `limit` capped at 500)
+**List markets from the local database** (paged; optional `active`, `closed`, `q` substring filter on question and slug, and **`sort`**: `created_desc` (default), `created_asc`, `volume_desc`, `volume_asc`, `end_desc`, `end_asc`, `start_desc`, `start_asc`, or aliases `newest` / `oldest`; `limit` capped at 500)
 
 ```bash
 curl -s "http://127.0.0.1:8000/db/markets?limit=50&offset=0"
 curl -s "http://127.0.0.1:8000/db/markets?active=true&closed=false&q=election"
+curl -s "http://127.0.0.1:8000/db/markets?limit=50&sort=volume_desc"
 ```
 
 Response shape: `{"items":[...],"total":N,"limit":L,"offset":O}`.
@@ -475,4 +476,4 @@ npm run dev
 
 (`npm start` is the same command: it runs the Vite dev server.)
 
-Open the URL Vite prints in the terminal, usually [http://127.0.0.1:5173](http://127.0.0.1:5173). The UI is a minimal shell for now (blank page with the Polymarket mark from **`frontend/assets/`** as the centered icon and favicon). When you add API calls from the browser, use paths under **`/api/...`** in development so the Vite proxy forwards to the backend. Use **`npm run build`** to produce static files under **`frontend/dist/`**; for that build, set environment variable **`VITE_API_URL`** to the full API origin (for example `https://api.example.com`, no trailing slash) so the browser can reach the API. If the UI and API are on different origins, configure **CORS** on the API for your UI origin.
+Open the URL Vite prints in the terminal, usually [http://127.0.0.1:5173](http://127.0.0.1:5173). The UI is a **markets browse** page: it loads **`GET /db/markets`** (via the dev proxy as **`/api/db/markets`**) with search, **All / Active / Closed** filters, optional **`sort`** (e.g. `created_desc`, `volume_desc`, `end_asc`), pagination (**50** or **100** per page), and compact cards (question, slug, image/icon, start/end dates, **volumeNum** for volume, outcome count from **outcomes**). UI code lives under **`frontend/src/features/markets/`** (`domain/`, `query/`, `hooks/`, `format/`, `components/`). The Polymarket mark in **`frontend/assets/`** is the favicon and fallback image. Use **`npm run build`** to produce static files under **`frontend/dist/`**; set **`VITE_API_URL`** to the full API origin when the UI is not served through the Vite proxy. If the UI and API are on different origins, configure **CORS** on the API for your UI origin.

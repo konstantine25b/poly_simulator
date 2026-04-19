@@ -1,0 +1,286 @@
+.mkt-app {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2.5rem;
+}
+
+.mkt-hero-brand {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.mkt-hero-logo {
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.mkt-hero-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.65rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.mkt-hero-sub {
+  margin: 0;
+  color: #8b96a8;
+  font-size: 0.95rem;
+  max-width: 52ch;
+}
+
+.mkt-toolbar {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mkt-search {
+  width: 100%;
+  max-width: none;
+  padding: 0.65rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid #2a3340;
+  background: #141a22;
+  color: inherit;
+  font: inherit;
+}
+
+.mkt-search::placeholder {
+  color: #5c677a;
+}
+
+.mkt-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mkt-toolbar-sort {
+  justify-content: flex-start;
+}
+
+.mkt-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #8b96a8;
+  font-size: 0.875rem;
+}
+
+.mkt-sort-select {
+  font: inherit;
+  min-width: 200px;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #2a3340;
+  background: #141a22;
+  color: inherit;
+}
+
+.mkt-filters {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.mkt-filter {
+  font: inherit;
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #2a3340;
+  background: #141a22;
+  color: #b4c0d4;
+}
+
+.mkt-filter.on {
+  background: #1e2a3d;
+  border-color: #3d6fd4;
+  color: #fff;
+}
+
+.mkt-pagesize {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #8b96a8;
+  font-size: 0.875rem;
+}
+
+.mkt-pagesize select {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #2a3340;
+  background: #141a22;
+  color: inherit;
+}
+
+.mkt-main {
+  margin-top: 1.25rem;
+}
+
+.mkt-state {
+  padding: 1rem 0;
+  color: #8b96a8;
+}
+
+.mkt-state.mkt-err {
+  color: #f5a0a0;
+}
+
+.mkt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mkt-card {
+  background: #121820;
+  border: 1px solid #232d3b;
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+}
+
+.mkt-card-top {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 0.85rem;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .mkt-card-top {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .mkt-card-side {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.mkt-thumb-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #1a2230;
+  flex-shrink: 0;
+}
+
+.mkt-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mkt-card-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mkt-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #f2f5f9;
+}
+
+.mkt-slug {
+  font-size: 0.8rem;
+  color: #6b7a90;
+  margin-top: 0.2rem;
+  word-break: break-all;
+}
+
+.mkt-dates {
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  color: #8b96a8;
+}
+
+.mkt-dates-sep {
+  margin: 0 0.35rem;
+  opacity: 0.6;
+}
+
+.mkt-pill.mkt-live {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  background: #143d28;
+  color: #5ee9a8;
+}
+
+.mkt-card-side {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-end;
+}
+
+.mkt-vol {
+  font-weight: 600;
+  color: #dbe4f0;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.mkt-ocount {
+  font-size: 0.78rem;
+  color: #6b7a90;
+}
+
+.mkt-pager {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #232d3b;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mkt-pager-info {
+  font-size: 0.875rem;
+  color: #8b96a8;
+}
+
+.mkt-pager-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.mkt-navbtn {
+  font: inherit;
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #2a3340;
+  background: #141a22;
+  color: #e7eaee;
+}
+
+.mkt-navbtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.mkt-pager-page {
+  font-size: 0.85rem;
+  color: #8b96a8;
+}

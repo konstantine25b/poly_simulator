@@ -4,23 +4,12 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  background: #fafafa;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.45;
+  background: #0c0f12;
+  color: #e7eaee;
 }
 
 #root {
   min-height: 100vh;
-}
-
-.shell {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mark {
-  display: block;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(15, 20, 25, 0.08);
 }
