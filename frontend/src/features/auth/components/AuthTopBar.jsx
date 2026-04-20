@@ -17,10 +17,10 @@ export function AuthTopBar() {
     <div className="auth-topbar">
       {isAuthenticated ? (
         <>
-          <div className="auth-topbar-user" title={user?.email}>
+          <Link to="/profile" className="auth-topbar-user" title="View profile">
             <span className="auth-topbar-avatar">{initialFor(user?.email)}</span>
             <span className="auth-topbar-email">{user?.email}</span>
-          </div>
+          </Link>
           <button type="button" className="auth-btn auth-btn-ghost" onClick={logout}>
             Log out
           </button>
