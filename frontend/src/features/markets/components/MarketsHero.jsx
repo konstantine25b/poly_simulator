@@ -9,8 +9,7 @@ export function MarketsHero() {
           <div className="mkt-hero-copy">
             <h1 className="mkt-hero-title">Trade Polymarkets</h1>
             <p className="mkt-hero-sub">
-              Browse markets from your catalog with stored pricing. Practice trades use your paper balance on the
-              API.
+              Browse markets from catalog with stored pricing. Practice trades using your paper balance through the API.
             </p>
           </div>
         </div>
