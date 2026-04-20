@@ -12,6 +12,19 @@ async function authedGet(token, path) {
   return data;
 }
 
+async function authedDelete(token, path) {
+  const res = await fetch(`${apiBase}${path}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const detail = data && (data.detail || data.message);
+    throw new Error(typeof detail === "string" ? detail : `Request failed (${res.status})`);
+  }
+  return data;
+}
+
 async function authedPost(token, path, body) {
   const res = await fetch(`${apiBase}${path}`, {
     method: "POST",
@@ -43,4 +56,8 @@ export function createPortfolio(token, body) {
 
 export function fetchAdminUsers(token) {
   return authedGet(token, "/admin/users");
+}
+
+export function deletePortfolio(token, portfolioRef) {
+  return authedDelete(token, `/portfolios/${encodeURIComponent(portfolioRef)}`);
 }

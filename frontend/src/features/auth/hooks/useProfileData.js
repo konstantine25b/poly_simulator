@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   createPortfolio,
+  deletePortfolio,
   fetchAdminUsers,
   fetchPortfolioSummary,
   fetchPortfolios,
@@ -94,5 +95,15 @@ export function useProfileData(token, userId, isAdmin) {
     [token, refresh],
   );
 
-  return { items, loading, err, creating, create, refresh };
+  const remove = useCallback(
+    async (portfolioId) => {
+      if (!token || portfolioId === undefined || portfolioId === null) return null;
+      const result = await deletePortfolio(token, portfolioId);
+      setItems((prev) => prev.filter((p) => Number(p.id) !== Number(portfolioId)));
+      return result;
+    },
+    [token],
+  );
+
+  return { items, loading, err, creating, create, remove, refresh };
 }

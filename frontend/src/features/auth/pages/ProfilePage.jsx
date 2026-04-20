@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import polymarketMark from "../../../../assets/polymarket.jpg";
+import { ConfirmDialog } from "../components/ConfirmDialog.jsx";
 import { NewPortfolioDialog } from "../components/NewPortfolioDialog.jsx";
 import { PortfolioCard } from "../components/PortfolioCard.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -28,12 +29,15 @@ function sum(values) {
 export function ProfilePage() {
   const { user, token, logout } = useAuth();
   const isAdmin = Boolean(user?.is_admin);
-  const { items, loading, err, creating, create, refresh } = useProfileData(
+  const { items, loading, err, creating, create, remove, refresh } = useProfileData(
     token,
     user?.id,
     isAdmin,
   );
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const canDelete = (p) => isAdmin || Number(p.user_id) === Number(user?.id);
 
   const totalCash = sum(items.map((p) => p.balance));
   const totalEquity = sum(items.map((p) => p.summary?.equity ?? p.balance));
@@ -138,7 +142,11 @@ export function ProfilePage() {
 
           <div className="prof-port-list">
             {items.map((p) => (
-              <PortfolioCard key={p.id} portfolio={p} />
+              <PortfolioCard
+                key={p.id}
+                portfolio={p}
+                onDelete={canDelete(p) ? setDeleteTarget : undefined}
+              />
             ))}
           </div>
         </section>
@@ -149,6 +157,24 @@ export function ProfilePage() {
         busy={creating}
         onClose={() => setDialogOpen(false)}
         onSubmit={create}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        danger
+        title={deleteTarget ? `Delete "${deleteTarget.name}"?` : ""}
+        message={
+          deleteTarget
+            ? `This permanently removes the portfolio, all its positions, and trade history${
+                deleteTarget.owner_email && Number(deleteTarget.user_id) !== Number(user?.id)
+                  ? ` belonging to ${deleteTarget.owner_email}`
+                  : ""
+              }. This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete portfolio"
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => remove(deleteTarget.id)}
       />
     </div>
   );

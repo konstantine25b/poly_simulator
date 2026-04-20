@@ -22,7 +22,7 @@ function pnlClass(n) {
   return "";
 }
 
-export function PortfolioCard({ portfolio }) {
+export function PortfolioCard({ portfolio, onDelete }) {
   const s = portfolio.summary;
   return (
     <div className="prof-port-card">
@@ -41,9 +41,22 @@ export function PortfolioCard({ portfolio }) {
             </div>
           ) : null}
         </div>
-        <div className="prof-port-balance">
-          <span className="prof-port-balance-lbl">Cash</span>
-          <span className="prof-port-balance-val">{formatUsd(portfolio.balance)}</span>
+        <div className="prof-port-right">
+          <div className="prof-port-balance">
+            <span className="prof-port-balance-lbl">Cash</span>
+            <span className="prof-port-balance-val">{formatUsd(portfolio.balance)}</span>
+          </div>
+          {onDelete ? (
+            <button
+              type="button"
+              className="prof-port-delete"
+              onClick={() => onDelete(portfolio)}
+              title="Delete portfolio"
+              aria-label={`Delete portfolio ${portfolio.name}`}
+            >
+              Delete
+            </button>
+          ) : null}
         </div>
       </div>
       {s ? (
