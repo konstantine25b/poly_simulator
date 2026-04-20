@@ -100,6 +100,23 @@ class TradingService:
             conn.close()
 
     @staticmethod
+    def delete_portfolio(access: Access, portfolio: int | str) -> dict[str, Any]:
+        ph = placeholder()
+        conn = get_connection()
+        try:
+            pid = _resolve_portfolio_id(conn, portfolio, access)
+            execute(conn, f"DELETE FROM trades WHERE portfolio_id = {ph}", (pid,))
+            execute(conn, f"DELETE FROM positions WHERE portfolio_id = {ph}", (pid,))
+            execute(conn, f"DELETE FROM portfolios WHERE id = {ph}", (pid,))
+            conn.commit()
+            return {"ok": True, "deleted_id": pid}
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+
+    @staticmethod
     def list_portfolios(access: Access) -> list[dict[str, Any]]:
         conn = get_connection()
         try:

@@ -30,6 +30,11 @@ def get_portfolio_summary(portfolio: str, access: Access = Depends(get_access)) 
     return svc_exc(lambda: TradingService(portfolio, access).get_portfolio())
 
 
+@router.delete("/portfolios/{portfolio}")
+def delete_portfolio(portfolio: str, access: Access = Depends(get_access)) -> dict[str, Any]:
+    return svc_exc(lambda: TradingService.delete_portfolio(access=access, portfolio=portfolio))
+
+
 @router.get("/portfolios/{portfolio}/positions")
 def get_portfolio_positions(portfolio: str, access: Access = Depends(get_access)) -> list[dict[str, Any]]:
     return svc_exc(lambda: TradingService(portfolio, access).get_positions())
