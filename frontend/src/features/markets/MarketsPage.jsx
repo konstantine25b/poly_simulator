@@ -1,4 +1,5 @@
 import "./markets.css";
+import { AuthTopBar } from "../auth/components/AuthTopBar.jsx";
 import { MarketCard } from "./components/MarketCard.jsx";
 import { MarketsHero } from "./components/MarketsHero.jsx";
 import { MarketsPager } from "./components/MarketsPager.jsx";
@@ -33,6 +34,7 @@ export function MarketsPage() {
 
   return (
     <div className="mkt-app">
+      <AuthTopBar />
       <MarketsHero />
       <MarketsToolbar
         qInput={qInput}
