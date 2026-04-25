@@ -326,6 +326,10 @@
   flex-wrap: wrap;
 }
 
+.prof-nav-end {
+  justify-content: flex-end;
+}
+
 .prof-nav .auth-back {
   margin-bottom: 0;
 }

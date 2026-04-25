@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import polymarketMark from "../../../../assets/polymarket.jpg";
 import { ConfirmDialog } from "../components/ConfirmDialog.jsx";
 import { NewPortfolioDialog } from "../components/NewPortfolioDialog.jsx";
@@ -27,7 +26,7 @@ function sum(values) {
 }
 
 export function ProfilePage() {
-  const { user, token, logout } = useAuth();
+  const { user, token } = useAuth();
   const isAdmin = Boolean(user?.is_admin);
   const { items, loading, err, creating, create, remove, refresh } = useProfileData(
     token,
@@ -49,16 +48,10 @@ export function ProfilePage() {
     <div className="prof-page">
       <div className="auth-bg" aria-hidden />
       <div className="prof-container">
-        <nav className="prof-nav">
-          <Link to="/" className="auth-back">
-            <span aria-hidden>←</span> Back to markets
-          </Link>
+        <nav className="prof-nav prof-nav-end">
           <div className="prof-nav-actions">
             <button type="button" className="auth-btn auth-btn-ghost" onClick={refresh}>
               Refresh
-            </button>
-            <button type="button" className="auth-btn auth-btn-ghost" onClick={logout}>
-              Log out
             </button>
           </div>
         </nav>
