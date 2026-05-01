@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import polymarketMark from "../../../../assets/polymarket.jpg";
 import { PortfolioSummaryGrid } from "../components/PortfolioSummaryGrid.jsx";
 import { PositionList } from "../components/PositionList.jsx";
+import { SellPositionDialog } from "../components/SellPositionDialog.jsx";
+import { SettlePositionDialog } from "../components/SettlePositionDialog.jsx";
 import { TradeList } from "../components/TradeList.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { formatUsd, initialFor } from "../format.js";
 import { usePortfolioDetail } from "../hooks/usePortfolioDetail.js";
+import { closePosition, settlePosition } from "../query/portfoliosApi.js";
 import "../auth.css";
 import "../portfolioDetail.css";
 
@@ -14,10 +18,23 @@ export function PortfolioDetailPage() {
   const { user, token } = useAuth();
   const { data, loading, err, refresh } = usePortfolioDetail(token, portfolioId);
 
+  const [sellTarget, setSellTarget] = useState(null);
+  const [settleTarget, setSettleTarget] = useState(null);
+
   const summary = data?.summary;
   const positions = data?.positions || [];
   const trades = data?.trades || [];
   const name = summary?.name || (loading ? "Loading…" : `Portfolio #${portfolioId}`);
+
+  const handleSell = async (body) => {
+    await closePosition(token, portfolioId, body);
+    await refresh();
+  };
+
+  const handleSettle = async (body) => {
+    await settlePosition(token, portfolioId, body);
+    await refresh();
+  };
 
   return (
     <div className="prof-page pd-page">
@@ -82,7 +99,11 @@ export function PortfolioDetailPage() {
             <h2 className="prof-section-title">Open positions</h2>
             <span className="pd-section-count">{positions.length}</span>
           </div>
-          <PositionList positions={positions} />
+          <PositionList
+            positions={positions}
+            onSell={setSellTarget}
+            onSettle={setSettleTarget}
+          />
         </section>
 
         <section className="prof-section">
@@ -93,6 +114,19 @@ export function PortfolioDetailPage() {
           <TradeList trades={trades} />
         </section>
       </div>
+
+      <SellPositionDialog
+        open={Boolean(sellTarget)}
+        position={sellTarget}
+        onClose={() => setSellTarget(null)}
+        onSubmit={handleSell}
+      />
+      <SettlePositionDialog
+        open={Boolean(settleTarget)}
+        position={settleTarget}
+        onClose={() => setSettleTarget(null)}
+        onSubmit={handleSettle}
+      />
     </div>
   );
 }

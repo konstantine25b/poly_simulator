@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import polymarketMark from "../../../../assets/polymarket.jpg";
+import { BetWidget } from "../../auth/components/BetWidget.jsx";
 import { apiBase } from "../../../config.js";
 import { DETAIL_SECTIONS, formatDetailValue, pickField } from "../detailSections.js";
 import { fetchMarketDetail } from "../query/fetchMarketDetail.js";
@@ -140,6 +141,14 @@ export function MarketDetailPage() {
               </div>
             </div>
           </header>
+
+          {data && mid ? (
+            <BetWidget
+              marketId={mid}
+              quotes={liveQuotes}
+              disabled={Boolean(data.closed)}
+            />
+          ) : null}
 
           {!data.closed && liveQuotes && liveQuotes.length > 0 ? (
             <section className="md-panel md-quotes-section">

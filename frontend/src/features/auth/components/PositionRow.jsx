@@ -14,7 +14,7 @@ function pnlPct(cost, pnl) {
   return (p / c) * 100;
 }
 
-export function PositionRow({ position }) {
+export function PositionRow({ position, onSell, onSettle }) {
   const shares = Number(position.shares);
   const avg = Number(position.avg_price);
   const cost = Number(position.cost);
@@ -84,6 +84,29 @@ export function PositionRow({ position }) {
       </div>
 
       {errorMsg ? <div className="pd-pos-warn">{errorMsg}</div> : null}
+
+      {onSell || onSettle ? (
+        <div className="pd-pos-actions">
+          {onSell && !errorMsg ? (
+            <button
+              type="button"
+              className="auth-btn auth-btn-primary pd-pos-action"
+              onClick={() => onSell(position)}
+            >
+              Sell
+            </button>
+          ) : null}
+          {onSettle ? (
+            <button
+              type="button"
+              className="auth-btn auth-btn-ghost pd-pos-action"
+              onClick={() => onSettle(position)}
+            >
+              Settle
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

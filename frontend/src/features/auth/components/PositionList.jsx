@@ -1,6 +1,6 @@
 import { PositionRow } from "./PositionRow.jsx";
 
-export function PositionList({ positions }) {
+export function PositionList({ positions, onSell, onSettle }) {
   if (!positions || positions.length === 0) {
     return (
       <div className="pd-empty">
@@ -11,7 +11,7 @@ export function PositionList({ positions }) {
   return (
     <div className="pd-pos-list">
       {positions.map((p) => (
-        <PositionRow key={p.id} position={p} />
+        <PositionRow key={p.id} position={p} onSell={onSell} onSettle={onSettle} />
       ))}
     </div>
   );

@@ -69,3 +69,15 @@ export function fetchAdminUsers(token) {
 export function deletePortfolio(token, portfolioRef) {
   return authedDelete(token, `/portfolios/${encodeURIComponent(portfolioRef)}`);
 }
+
+export function placeBet(token, portfolioRef, body) {
+  return authedPost(token, `/portfolios/${encodeURIComponent(portfolioRef)}/bet`, body);
+}
+
+export function closePosition(token, portfolioRef, body) {
+  return authedPost(token, `/portfolios/${encodeURIComponent(portfolioRef)}/close`, body);
+}
+
+export function settlePosition(token, portfolioRef, body) {
+  return authedPost(token, `/portfolios/${encodeURIComponent(portfolioRef)}/settle`, body);
+}
