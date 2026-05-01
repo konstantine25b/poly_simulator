@@ -278,9 +278,48 @@ curl -s -X POST "http://127.0.0.1:8000/portfolios/PORTFOLIO/settle" \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"position_id":1,"won":true}'
+
+curl -s -X DELETE "http://127.0.0.1:8000/portfolios/PORTFOLIO" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-Portfolio **names** are unique per user (two different users may both use `demo`). Requests without a token return **401**. Accessing another user’s portfolio without admin privileges returns **400** with `portfolio not found` (same message as a missing id, to avoid leaking existence). Invalid input or other business-rule failures return **400** with a JSON `detail` string; missing markets return **404**. Bets, closes, and portfolio summaries need live market data where applicable, so run these with network access and valid ids from your seeded database or from Polymarket.
+Portfolio **names** are unique per user (two different users may both use `demo`). Requests without a token return **401**. Accessing another user’s portfolio without admin privileges returns **400** with `portfolio not found` (same message as a missing id, to avoid leaking existence). Invalid input or other business-rule failures return **400** with a JSON `detail` string; missing markets return **404**. Bets, closes, and portfolio summaries need live market data where applicable, so run these with network access and valid ids from your seeded database or from Polymarket. **`DELETE /portfolios/{portfolio}`** removes the portfolio together with its positions and trades; non-admins can only delete their own portfolios, admins can delete any.
+
+---
+
+## WebSocket — live best bid / ask
+
+The API proxies the Polymarket CLOB **market** channel and forwards only `best_bid_ask` frames, so the UI (and your own clients) can stream best bid / best ask per outcome token without talking to Polymarket directly.
+
+**Discover the socket path** (resolves the id/slug, lists subscribed CLOB token ids, and returns the WS path plus an example message shape):
+
+```bash
+curl -s "http://127.0.0.1:8000/markets/QUERY/best-bid-ask/ws-docs"
+```
+
+`QUERY` is a Gamma **market id** (digits) or **slug**, the same value accepted by `GET /markets/{query}/resolved`. The response includes `websocket_path` (always `/ws/markets/{query}/best-bid-ask`) and `subscribed_asset_ids` (the CLOB token ids the upstream subscription will use).
+
+**Connect to the stream**:
+
+```
+ws://127.0.0.1:8000/ws/markets/QUERY/best-bid-ask
+```
+
+(Use `wss://` behind TLS.) The server opens `wss://ws-subscriptions-clob.polymarket.com/ws/market`, subscribes with `custom_feature_enabled: true`, sends an application-level `PING` every 10 seconds, and forwards each `best_bid_ask` JSON object as-is. Frames look like:
+
+```json
+{
+  "event_type": "best_bid_ask",
+  "market": "0x0005c0d3…",
+  "asset_id": "85354956062430465315924116860125388538595433819574542752031640332592237464430",
+  "best_bid": "0.73",
+  "best_ask": "0.77",
+  "spread": "0.04",
+  "timestamp": "1766789469958"
+}
+```
+
+If the market or its CLOB tokens cannot be resolved, the server sends `{"error": "..."}` and closes with code `1008`. If the upstream Polymarket socket cannot be reached, it sends `{"error": "upstream unavailable"}` and closes with code `1011`. The route is **public** (no bearer token required).
 
 ---
 
@@ -477,4 +516,24 @@ npm run dev
 
 (`npm start` is the same command: it runs the Vite dev server.)
 
-Open the URL Vite prints in the terminal, usually [http://127.0.0.1:5173](http://127.0.0.1:5173). The UI is a **markets browse** page: it loads **`GET /db/markets`** (via the dev proxy as **`/api/db/markets`**) for a **catalog** substring search (question and slug in your DB), plus **All / Active / Closed** filters, optional **`sort`**, and pagination (**50** or **100** per page). A second field calls **`GET /markets/{query}/live`** as **`/api/markets/.../live`** for an **exact Gamma lookup** by numeric **id** or **slug** (live Polymarket data, not the local DB). Each catalog card links to **`/m/{id-or-slug}`**, which loads **`GET /markets/{query}/detail`** (`closed` → full row from the **database**; open → **live** Gamma market plus **best bid / best ask** per outcome token from the CLOB book, no full order book). The grid uses **3-column** compact cards (hover, **Live** when `active`, not `closed`, not past **end** time, **volumeNum**, **outcomes** + **outcomePrices**). UI code lives under **`frontend/src/features/markets/`** (uses **`react-router-dom`**). The Polymarket mark in **`frontend/assets/`** is the favicon and fallback image. Use **`npm run build`** and **`VITE_API_URL`** when not using the Vite proxy; configure **CORS** if UI and API differ by origin.
+Open the URL Vite prints in the terminal, usually [http://127.0.0.1:5173](http://127.0.0.1:5173). The app uses **`react-router-dom`** and exposes the following routes:
+
+- **`/`** — markets browse (public).
+- **`/m/:marketRef`** — market detail (public).
+- **`/login`**, **`/register`** — sign in / sign up (public, no top navbar).
+- **`/profile`** — your profile and portfolio list (auth required).
+- **`/portfolios/:portfolioId`** — single-portfolio dashboard with live quotes (auth required).
+
+`/profile` and `/portfolios/:portfolioId` are wrapped in `RequireAuth`; if there is no token in `localStorage`, the user is bounced to `/login`. UI code is split into **`frontend/src/features/markets/`** (browse + detail) and **`frontend/src/features/auth/`** (login, register, profile, portfolio detail, components, hooks, API client). The Polymarket mark in **`frontend/assets/`** is the favicon and fallback image.
+
+**Markets browse (`/`)** — loads **`GET /db/markets`** (via the dev proxy as **`/api/db/markets`**) for a **catalog** substring search (question and slug in your DB), plus **All / Active / Closed** filters, optional **`sort`**, and pagination (**50** or **100** per page). A second field calls **`GET /markets/{query}/live`** as **`/api/markets/.../live`** for an **exact Gamma lookup** by numeric **id** or **slug** (live Polymarket data, not the local DB). Each catalog card links to **`/m/{id-or-slug}`** and the grid uses **3-column** compact cards (hover, **Live** when `active`, not `closed`, not past **end** time, **volumeNum**, **outcomes** + **outcomePrices**).
+
+**Market detail (`/m/:marketRef`)** — loads **`GET /markets/{query}/detail`** (`closed` → full row from the **database**; open → **live** Gamma market plus **best bid / best ask** per outcome token from the CLOB book, no full order book).
+
+**Auth (`/login`, `/register`)** — POST to **`/auth/login`** / **`/auth/register`**, store the returned `access_token` and the user payload in `localStorage` via the `AuthProvider` (`frontend/src/features/auth/context/`), then redirect to `/profile`. The navbar is hidden on these two routes.
+
+**Profile (`/profile`)** — lists the current user's portfolios (admins see every user's portfolios) using **`GET /portfolios`**, with totals (equity, cash, invested, P/L) computed in the browser. **New portfolio** opens a dialog that POSTs to **`/portfolios`**; each card has a **Delete** action that calls **`DELETE /portfolios/{id}`** (non-admins can only delete their own).
+
+**Portfolio detail (`/portfolios/:portfolioId`)** — pulls **summary**, **positions**, and **trades** in parallel (**`GET /portfolios/{id}/summary|positions|trades`**) and then opens **one WebSocket per distinct market** to **`WS /ws/markets/{query}/best-bid-ask`** (see the WebSocket section above). Live `best_bid` / `best_ask` updates re-mark every open position in real time, so `current_price`, `market_value`, and `unrealized_pnl` recompute on each tick without a re-fetch. A **Live / Live · partial / Connecting… / Live unavailable** pill in the top bar reflects how many of the underlying sockets are connected. The page also exposes per-position **Sell** and **Settle** dialogs that POST to **`/portfolios/{id}/close`** and **`/portfolios/{id}/settle`** respectively.
+
+**Building and deploying** — use **`npm run build`** to produce `frontend/dist/`, and set **`VITE_API_URL`** when you are not using the Vite dev proxy (the WS URL helper at `frontend/src/features/markets/query/marketBestBidAskWsUrl.js` rewrites the same base to `ws://` / `wss://` automatically). Configure **CORS** on the FastAPI side if UI and API are served from different origins.
