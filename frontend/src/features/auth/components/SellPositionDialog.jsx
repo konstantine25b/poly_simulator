@@ -1,13 +1,38 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatNumber, formatPrice, formatUsd } from "../format.js";
 
+function LivePriceTag({ status }) {
+  if (status === "connected") {
+    return (
+      <span className="pd-live-pill pd-live-pill-on pd-live-pill-inline" title="Streaming live">
+        <span className="pd-live-dot" aria-hidden />
+        Live
+      </span>
+    );
+  }
+  if (status === "connecting") {
+    return <span className="pd-live-pill pd-live-pill-inline">Connecting…</span>;
+  }
+  if (status === "error" || status === "closed") {
+    return (
+      <span
+        className="pd-live-pill pd-live-pill-warn pd-live-pill-inline"
+        title="Showing last known price"
+      >
+        Last known
+      </span>
+    );
+  }
+  return null;
+}
+
 function parseShares(raw) {
   const n = Number(String(raw ?? "").trim());
   if (!Number.isFinite(n) || n <= 0) return null;
   return n;
 }
 
-export function SellPositionDialog({ open, position, onClose, onSubmit }) {
+export function SellPositionDialog({ open, position, liveStatus, onClose, onSubmit }) {
   const [sharesInput, setSharesInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -18,7 +43,7 @@ export function SellPositionDialog({ open, position, onClose, onSubmit }) {
       setBusy(false);
       setErr(null);
     }
-  }, [open, position]);
+  }, [open, position?.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -96,7 +121,10 @@ export function SellPositionDialog({ open, position, onClose, onSubmit }) {
                 <span className="bw-summary-val">{formatNumber(totalShares, 4)}</span>
               </div>
               <div className="bw-summary-row">
-                <span className="bw-summary-lbl">Current price</span>
+                <span className="bw-summary-lbl">
+                  Sell price (best bid)
+                  <LivePriceTag status={liveStatus} />
+                </span>
                 <span className="bw-summary-val">{formatPrice(cur)}</span>
               </div>
             </div>

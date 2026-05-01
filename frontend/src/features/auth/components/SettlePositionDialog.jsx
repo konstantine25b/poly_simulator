@@ -12,7 +12,7 @@ export function SettlePositionDialog({ open, position, onClose, onSubmit }) {
       setBusy(false);
       setErr(null);
     }
-  }, [open, position]);
+  }, [open, position?.id]);
 
   useEffect(() => {
     if (!open) return;

@@ -1,21 +1,32 @@
 import { formatUsd, pnlClass } from "../format.js";
 
-export function PortfolioSummaryGrid({ summary, positionsCount }) {
+function pctLabel(pct) {
+  if (pct === null) return null;
+  return `${pct > 0 ? "+" : ""}${pct.toFixed(2)}%`;
+}
+
+export function PortfolioSummaryGrid({ summary, positionsCount, startingBalance }) {
   const equity = summary?.equity;
   const balance = summary?.balance;
   const invested = summary?.total_invested;
   const marketValue = summary?.positions_market_value;
   const pnl = summary?.unrealized_pnl;
+
   const investedNum = Number(invested);
   const pnlNum = Number(pnl);
-  const pct =
+  const investedPct =
     Number.isFinite(investedNum) && investedNum > 0 && Number.isFinite(pnlNum)
       ? (pnlNum / investedNum) * 100
       : null;
-  const pctLabel =
-    pct === null
-      ? null
-      : `${pct > 0 ? "+" : ""}${pct.toFixed(2)}%`;
+
+  const equityNum = Number(equity);
+  const startNum = Number(startingBalance);
+  const totalReturn =
+    Number.isFinite(equityNum) && Number.isFinite(startNum)
+      ? equityNum - startNum
+      : null;
+  const totalReturnPct =
+    totalReturn !== null && startNum > 0 ? (totalReturn / startNum) * 100 : null;
 
   return (
     <section className="prof-summary pd-summary">
@@ -43,8 +54,26 @@ export function PortfolioSummaryGrid({ summary, positionsCount }) {
         <span className={`prof-summary-val ${pnlClass(pnl)}`}>
           {formatUsd(pnl, { signed: true })}
         </span>
-        {pctLabel ? (
-          <span className={`pd-summary-pct ${pnlClass(pnl)}`}>{pctLabel}</span>
+        {investedPct !== null ? (
+          <span className={`pd-summary-pct ${pnlClass(pnl)}`}>
+            {pctLabel(investedPct)}
+          </span>
+        ) : null}
+      </div>
+      <div className="prof-summary-card">
+        <span className="prof-summary-lbl">Return vs start</span>
+        <span className={`prof-summary-val ${pnlClass(totalReturn)}`}>
+          {totalReturn === null ? "—" : formatUsd(totalReturn, { signed: true })}
+        </span>
+        {totalReturnPct !== null ? (
+          <span className={`pd-summary-pct ${pnlClass(totalReturn)}`}>
+            {pctLabel(totalReturnPct)}
+          </span>
+        ) : null}
+        {startNum > 0 ? (
+          <span className="prof-summary-hint">
+            Started with {formatUsd(startNum)}
+          </span>
         ) : null}
       </div>
     </section>

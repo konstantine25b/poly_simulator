@@ -68,7 +68,7 @@ export function PositionRow({ position, onSell, onSettle }) {
           <span className="pd-stat-val">{formatPrice(avg)}</span>
         </div>
         <div className="pd-stat">
-          <span className="pd-stat-lbl">Current</span>
+          <span className="pd-stat-lbl">Current (bid)</span>
           <span className="pd-stat-val">{formatPrice(cur)}</span>
         </div>
         <div className="pd-stat">

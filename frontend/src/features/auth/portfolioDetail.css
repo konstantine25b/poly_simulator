@@ -40,9 +40,15 @@
   }
 }
 
-@media (min-width: 1080px) {
+@media (min-width: 900px) {
   .pd-summary {
-    grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1240px) {
+  .pd-summary {
+    grid-template-columns: 1.4fr repeat(5, minmax(0, 1fr));
   }
 }
 
@@ -393,6 +399,62 @@ a.pd-pos-title:hover {
 .pd-port-card-link:focus-visible .prof-port-card {
   border-color: rgba(77, 127, 212, 0.7);
   box-shadow: 0 0 0 3px rgba(77, 127, 212, 0.25);
+}
+
+.pd-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid rgba(45, 58, 75, 0.85);
+  background: rgba(16, 22, 30, 0.75);
+  color: #b4c0d4;
+}
+
+.pd-live-pill-on {
+  border-color: rgba(94, 233, 168, 0.45);
+  background: rgba(94, 233, 168, 0.12);
+  color: #b9f5d6;
+}
+
+.pd-live-pill-warn {
+  border-color: rgba(229, 168, 76, 0.45);
+  background: rgba(229, 168, 76, 0.12);
+  color: #f4d99a;
+}
+
+.pd-live-pill-inline {
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pd-live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #5ee9a8;
+  box-shadow: 0 0 0 0 rgba(94, 233, 168, 0.6);
+  animation: pd-live-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pd-live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(94, 233, 168, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(94, 233, 168, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(94, 233, 168, 0);
+  }
 }
 
 .pd-pos-actions {

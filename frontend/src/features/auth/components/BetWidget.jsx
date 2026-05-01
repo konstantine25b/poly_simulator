@@ -222,7 +222,7 @@ export function BetWidget({ marketId, quotes, disabled }) {
 
         <div className="bw-summary">
           <div className="bw-summary-row">
-            <span className="bw-summary-lbl">Buy price</span>
+            <span className="bw-summary-lbl">Buy price (best ask)</span>
             <span className="bw-summary-val">
               {buyPrice !== null && buyPrice !== undefined
                 ? formatPrice(buyPrice)
