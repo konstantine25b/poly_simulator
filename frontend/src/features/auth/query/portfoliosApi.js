@@ -50,6 +50,14 @@ export function fetchPortfolioSummary(token, portfolioRef) {
   return authedGet(token, `/portfolios/${encodeURIComponent(portfolioRef)}/summary`);
 }
 
+export function fetchPortfolioPositions(token, portfolioRef) {
+  return authedGet(token, `/portfolios/${encodeURIComponent(portfolioRef)}/positions`);
+}
+
+export function fetchPortfolioTrades(token, portfolioRef) {
+  return authedGet(token, `/portfolios/${encodeURIComponent(portfolioRef)}/trades`);
+}
+
 export function createPortfolio(token, body) {
   return authedPost(token, "/portfolios", body);
 }

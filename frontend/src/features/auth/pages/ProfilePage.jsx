@@ -4,22 +4,9 @@ import { ConfirmDialog } from "../components/ConfirmDialog.jsx";
 import { NewPortfolioDialog } from "../components/NewPortfolioDialog.jsx";
 import { PortfolioCard } from "../components/PortfolioCard.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { formatUsd, initialFor } from "../format.js";
 import { useProfileData } from "../hooks/useProfileData.js";
 import "../auth.css";
-
-function formatUsd(n) {
-  if (n === null || n === undefined || Number.isNaN(Number(n))) return "—";
-  return Number(n).toLocaleString(undefined, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  });
-}
-
-function initialFor(email) {
-  if (!email) return "?";
-  return email.trim().charAt(0).toUpperCase() || "?";
-}
 
 function sum(values) {
   return values.reduce((acc, v) => acc + (Number.isFinite(Number(v)) ? Number(v) : 0), 0);

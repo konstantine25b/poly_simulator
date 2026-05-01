@@ -3,6 +3,7 @@ import { Navbar } from "./components/Navbar.jsx";
 import { RequireAuth } from "./features/auth/components/RequireAuth.jsx";
 import { AuthProvider } from "./features/auth/context/AuthContext.jsx";
 import { LoginPage } from "./features/auth/pages/LoginPage.jsx";
+import { PortfolioDetailPage } from "./features/auth/pages/PortfolioDetailPage.jsx";
 import { ProfilePage } from "./features/auth/pages/ProfilePage.jsx";
 import { RegisterPage } from "./features/auth/pages/RegisterPage.jsx";
 import { MarketsPage } from "./features/markets/MarketsPage.jsx";
@@ -36,6 +37,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <ProfilePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/portfolios/:portfolioId"
+              element={
+                <RequireAuth>
+                  <PortfolioDetailPage />
                 </RequireAuth>
               }
             />
