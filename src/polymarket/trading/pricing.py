@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from polymarket.api.prices import best_bid_ask_from_order_book, get_order_book
+from polymarket.catalog.order_books import clob_token_ids_for_market
+
 
 def _float_or_none(value: Any) -> float | None:
     if value is None:
@@ -10,6 +13,18 @@ def _float_or_none(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _outcome_token_quote(market: dict[str, Any], outcome: str) -> tuple[float | None, float | None]:
+    idx = _outcome_book_index(market, outcome)
+    if idx is None:
+        return None, None
+    tokens = clob_token_ids_for_market(market)
+    if idx >= len(tokens):
+        return None, None
+    book = get_order_book(str(tokens[idx]))
+    bb_ba = best_bid_ask_from_order_book(book)
+    return _float_or_none(bb_ba.get("best_bid")), _float_or_none(bb_ba.get("best_ask"))
 
 
 def _resolve_outcome_price(market: dict[str, Any], outcome: str) -> float:
@@ -49,6 +64,11 @@ def _outcome_book_index(market: dict[str, Any], outcome: str) -> int | None:
 
 
 def _buy_fill_price(market: dict[str, Any], outcome: str) -> float:
+    tok_bb, tok_ba = _outcome_token_quote(market, outcome)
+    if tok_ba is not None:
+        return tok_ba
+    if tok_bb is not None:
+        return tok_bb
     bb = _float_or_none(market.get("bestBid"))
     ba = _float_or_none(market.get("bestAsk"))
     idx = _outcome_book_index(market, outcome)
@@ -60,6 +80,11 @@ def _buy_fill_price(market: dict[str, Any], outcome: str) -> float:
 
 
 def _sell_fill_price(market: dict[str, Any], outcome: str) -> float:
+    tok_bb, tok_ba = _outcome_token_quote(market, outcome)
+    if tok_bb is not None:
+        return tok_bb
+    if tok_ba is not None:
+        return tok_ba
     bb = _float_or_none(market.get("bestBid"))
     ba = _float_or_none(market.get("bestAsk"))
     idx = _outcome_book_index(market, outcome)
@@ -71,6 +96,11 @@ def _sell_fill_price(market: dict[str, Any], outcome: str) -> float:
 
 
 def _mark_price(market: dict[str, Any], outcome: str) -> float:
+    tok_bb, tok_ba = _outcome_token_quote(market, outcome)
+    if tok_bb is not None:
+        return tok_bb
+    if tok_ba is not None:
+        return tok_ba
     bb = _float_or_none(market.get("bestBid"))
     ba = _float_or_none(market.get("bestAsk"))
     idx = _outcome_book_index(market, outcome)
