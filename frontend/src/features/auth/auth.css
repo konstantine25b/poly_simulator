@@ -421,21 +421,9 @@
 }
 
 .prof-summary {
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
-}
-
-@media (min-width: 640px) {
-  .prof-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 960px) {
-  .prof-summary {
-    grid-template-columns: 1.4fr 1fr 1fr 1fr;
-  }
 }
 
 .prof-summary-card {
@@ -446,6 +434,8 @@
   border-radius: 14px;
   border: 1px solid rgba(45, 58, 75, 0.85);
   background: rgba(16, 22, 30, 0.75);
+  flex: 1 1 180px;
+  min-width: max-content;
 }
 
 .prof-summary-card-hero {
@@ -468,6 +458,7 @@
   color: #f4f7fb;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .prof-summary-hint {
@@ -554,6 +545,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.85rem;
+  flex-wrap: wrap;
 }
 
 .prof-port-name {
@@ -654,27 +646,23 @@
   font-weight: 650;
   color: #7cb8ff;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .prof-port-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.5rem;
   padding-top: 0.65rem;
   border-top: 1px solid rgba(42, 52, 68, 0.85);
-}
-
-@media (min-width: 480px) {
-  .prof-port-stats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
 }
 
 .prof-stat {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: max-content;
 }
 
 .prof-stat-lbl {
@@ -690,6 +678,7 @@
   font-weight: 600;
   color: #e7eaee;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .prof-port-stats-empty {
