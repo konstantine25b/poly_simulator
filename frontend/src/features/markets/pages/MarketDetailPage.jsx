@@ -5,6 +5,7 @@ import { BetWidget } from "../../auth/components/BetWidget.jsx";
 import { apiBase } from "../../../config.js";
 import { DETAIL_SECTIONS, formatDetailValue, pickField } from "../detailSections.js";
 import { fetchMarketDetail } from "../query/fetchMarketDetail.js";
+import { getCachedDetail, setCachedDetail } from "../query/marketsCache.js";
 import { useLiveBestQuotes } from "../query/useLiveBestQuotes.js";
 import "../marketDetail.css";
 
@@ -21,22 +22,36 @@ function humanKey(key) {
 
 export function MarketDetailPage() {
   const { marketRef } = useParams();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const initialCached = marketRef ? getCachedDetail(marketRef) : null;
+  const [data, setData] = useState(initialCached?.data ?? null);
+  const [loading, setLoading] = useState(!initialCached);
   const [err, setErr] = useState(null);
 
   useEffect(() => {
     if (!marketRef) return;
     let cancelled = false;
-    setLoading(true);
-    setErr(null);
-    setData(null);
+    const cached = getCachedDetail(marketRef);
+    if (cached) {
+      setData(cached.data);
+      setErr(null);
+      setLoading(false);
+      if (cached.fresh) return;
+    } else {
+      setLoading(true);
+      setErr(null);
+      setData(null);
+    }
     fetchMarketDetail(apiBase, marketRef)
       .then((json) => {
-        if (!cancelled) setData(json);
+        if (cancelled) return;
+        setData(json);
+        setErr(null);
+        setCachedDetail(marketRef, json);
       })
       .catch((e) => {
-        if (!cancelled) setErr(e.message || String(e));
+        if (cancelled) return;
+        if (!cached) setData(null);
+        setErr(e.message || String(e));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

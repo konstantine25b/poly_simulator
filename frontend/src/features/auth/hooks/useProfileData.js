@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createPortfolio,
   deletePortfolio,
@@ -6,6 +6,12 @@ import {
   fetchPortfolioSummary,
   fetchPortfolios,
 } from "../query/portfoliosApi.js";
+import {
+  getCachedList,
+  invalidateDetail,
+  setCachedList,
+  updateCachedList,
+} from "../query/portfoliosCache.js";
 
 function filterForViewer(portfolios, userId, isAdmin) {
   if (isAdmin) return portfolios;
@@ -42,42 +48,46 @@ async function loadPortfoliosWithSummaries(token, userId, isAdmin) {
 }
 
 export function useProfileData(token, userId, isAdmin) {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = token ? getCachedList(userId, isAdmin) : null;
+  const [items, setItems] = useState(cached?.data ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [err, setErr] = useState(null);
   const [creating, setCreating] = useState(false);
+  const inflight = useRef(false);
 
-  const refresh = useCallback(async () => {
-    if (!token) return;
-    setLoading(true);
-    setErr(null);
-    try {
-      const data = await loadPortfoliosWithSummaries(token, userId, isAdmin);
-      setItems(data);
-    } catch (e) {
-      setErr(e.message || String(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [token, userId, isAdmin]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const reload = useCallback(
+    async (showSpinner) => {
       if (!token) return;
+      if (inflight.current) return;
+      inflight.current = true;
+      if (showSpinner) setLoading(true);
+      setErr(null);
       try {
         const data = await loadPortfoliosWithSummaries(token, userId, isAdmin);
-        if (!cancelled) setItems(data);
+        setItems(data);
+        setCachedList(userId, isAdmin, data);
       } catch (e) {
-        if (!cancelled) setErr(e.message || String(e));
+        setErr(e.message || String(e));
       } finally {
-        if (!cancelled) setLoading(false);
+        inflight.current = false;
+        setLoading(false);
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [token, userId, isAdmin]);
+    },
+    [token, userId, isAdmin],
+  );
+
+  const refresh = useCallback(() => reload(true), [reload]);
+
+  useEffect(() => {
+    if (!token) return;
+    const c = getCachedList(userId, isAdmin);
+    if (c) {
+      setItems(c.data);
+      setLoading(false);
+      if (c.fresh) return;
+    }
+    reload(!c);
+  }, [token, userId, isAdmin, reload]);
 
   const create = useCallback(
     async (body) => {
@@ -86,23 +96,28 @@ export function useProfileData(token, userId, isAdmin) {
       setErr(null);
       try {
         const created = await createPortfolio(token, body || {});
-        await refresh();
+        await reload(false);
         return created;
       } finally {
         setCreating(false);
       }
     },
-    [token, refresh],
+    [token, reload],
   );
 
   const remove = useCallback(
     async (portfolioId) => {
       if (!token || portfolioId === undefined || portfolioId === null) return null;
       const result = await deletePortfolio(token, portfolioId);
-      setItems((prev) => prev.filter((p) => Number(p.id) !== Number(portfolioId)));
+      const target = Number(portfolioId);
+      setItems((prev) => prev.filter((p) => Number(p.id) !== target));
+      updateCachedList(userId, isAdmin, (list) =>
+        list.filter((p) => Number(p.id) !== target),
+      );
+      invalidateDetail(portfolioId);
       return result;
     },
-    [token],
+    [token, userId, isAdmin],
   );
 
   return { items, loading, err, creating, create, remove, refresh };

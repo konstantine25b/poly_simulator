@@ -3,6 +3,12 @@ import { apiBase } from "../../../config.js";
 import { buildMarketsQuery } from "../query/buildMarketsQuery.js";
 import { fetchGammaMarketByQuery } from "../query/fetchGammaMarketByQuery.js";
 import { fetchMarketsPage } from "../query/fetchMarketsPage.js";
+import {
+  getCachedGammaMarket,
+  getCachedPage,
+  setCachedGammaMarket,
+  setCachedPage,
+} from "../query/marketsCache.js";
 
 export function useMarketsCatalog() {
   const [filter, setFilter] = useState("all");
@@ -38,21 +44,28 @@ export function useMarketsCatalog() {
       return;
     }
     let cancelled = false;
-    setGammaLoading(true);
-    setGammaErr(null);
-    setGammaMarket(null);
+    const cached = getCachedGammaMarket(gammaQuery);
+    if (cached) {
+      setGammaMarket(cached.data);
+      setGammaErr(null);
+      setGammaLoading(false);
+      if (cached.fresh) return;
+    } else {
+      setGammaLoading(true);
+      setGammaErr(null);
+      setGammaMarket(null);
+    }
     fetchGammaMarketByQuery(apiBase, gammaQuery)
       .then((m) => {
-        if (!cancelled) {
-          setGammaMarket(m);
-          setGammaErr(null);
-        }
+        if (cancelled) return;
+        setGammaMarket(m);
+        setGammaErr(null);
+        setCachedGammaMarket(gammaQuery, m);
       })
       .catch((e) => {
-        if (!cancelled) {
-          setGammaMarket(null);
-          setGammaErr(e.message || String(e));
-        }
+        if (cancelled) return;
+        if (!cached) setGammaMarket(null);
+        setGammaErr(e.message || String(e));
       })
       .finally(() => {
         if (!cancelled) setGammaLoading(false);
@@ -69,17 +82,27 @@ export function useMarketsCatalog() {
   useEffect(() => {
     let cancelled = false;
     const qs = buildMarketsQuery(filter, q, page, pageSize, sort);
-    setLoading(true);
-    setErr(null);
+    const cached = getCachedPage(qs);
+    if (cached) {
+      setData(cached.data);
+      setErr(null);
+      setLoading(false);
+      if (cached.fresh) return;
+    } else {
+      setLoading(true);
+      setErr(null);
+    }
     fetchMarketsPage(apiBase, qs)
       .then((json) => {
-        if (!cancelled) setData(json);
+        if (cancelled) return;
+        setData(json);
+        setErr(null);
+        setCachedPage(qs, json);
       })
       .catch((e) => {
-        if (!cancelled) {
-          setData(null);
-          setErr(e.message || String(e));
-        }
+        if (cancelled) return;
+        if (!cached) setData(null);
+        setErr(e.message || String(e));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
