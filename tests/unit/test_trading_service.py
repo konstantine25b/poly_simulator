@@ -10,6 +10,8 @@ from polymarket.db import create_tables, execute, fetchall, get_connection, plac
 from polymarket.trading.service import (
     TradingService,
     _buy_fill_price,
+    _price_position,
+    _price_positions,
     _resolve_outcome_price,
     _sell_fill_price,
 )
@@ -477,3 +479,106 @@ class TestTradingService:
         assert after == pytest.approx(before - 10.0 * 0.52)
         trades = svc.get_trades()
         assert trades[0]["side"] == "settle_loss"
+
+
+class TestPricePosition:
+    def test_returns_market_and_mark_when_price_resolves(
+        self, api_market: dict, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            "polymarket.trading.service.fetch_market", lambda _q: dict(api_market)
+        )
+        pos = {"market_id": "m1", "outcome": "Yes", "shares": 1.0, "cost": 0.5}
+        out = _price_position(pos)
+        assert out["position"] is pos
+        assert out["market"] is not None
+        assert out["mark"] == pytest.approx(0.5)
+
+    def test_mark_is_none_when_market_missing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", lambda _q: None)
+        pos = {"market_id": "m1", "outcome": "Yes", "shares": 1.0, "cost": 0.5}
+        out = _price_position(pos)
+        assert out["market"] is None
+        assert out["mark"] is None
+
+    def test_mark_is_none_when_pricing_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            "polymarket.trading.service.fetch_market",
+            lambda _q: {"id": "m1", "outcomes": [], "outcomePrices": []},
+        )
+        pos = {"market_id": "m1", "outcome": "Yes", "shares": 1.0, "cost": 0.5}
+        out = _price_position(pos)
+        assert out["mark"] is None
+
+
+class TestPricePositions:
+    def test_empty_input_returns_empty_list(self) -> None:
+        assert _price_positions([]) == []
+
+    def test_single_position_skips_thread_pool(
+        self, api_market: dict, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            "polymarket.trading.service.fetch_market", lambda _q: dict(api_market)
+        )
+        positions = [{"market_id": "m1", "outcome": "Yes", "shares": 1.0, "cost": 0.5}]
+        out = _price_positions(positions)
+        assert len(out) == 1
+        assert out[0]["mark"] == pytest.approx(0.5)
+
+    def test_preserves_input_order(
+        self, api_market: dict, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            "polymarket.trading.service.fetch_market", lambda q: {**api_market, "id": q}
+        )
+        positions = [
+            {"market_id": f"m{i}", "outcome": "Yes", "shares": 1.0, "cost": 0.5}
+            for i in range(6)
+        ]
+        out = _price_positions(positions)
+        assert [entry["position"]["market_id"] for entry in out] == [
+            f"m{i}" for i in range(6)
+        ]
+
+    def test_runs_concurrently(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import time as _time
+
+        def slow_fetch(_q: str) -> dict:
+            _time.sleep(0.05)
+            return {"id": _q, "outcomes": ["Yes"], "outcomePrices": ["0.5"]}
+
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", slow_fetch)
+        positions = [
+            {"market_id": f"m{i}", "outcome": "Yes", "shares": 1.0, "cost": 0.5}
+            for i in range(8)
+        ]
+        start = _time.monotonic()
+        out = _price_positions(positions)
+        elapsed = _time.monotonic() - start
+        assert len(out) == 8
+        assert elapsed < 8 * 0.05 / 2
+
+    def test_isolated_failures_do_not_break_others(
+        self, api_market: dict, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def fetch(q: str) -> dict | None:
+            if q == "missing":
+                return None
+            return dict(api_market)
+
+        monkeypatch.setattr("polymarket.trading.service.fetch_market", fetch)
+        positions = [
+            {"market_id": "m1", "outcome": "Yes", "shares": 1.0, "cost": 0.5},
+            {"market_id": "missing", "outcome": "Yes", "shares": 1.0, "cost": 0.5},
+            {"market_id": "m2", "outcome": "Yes", "shares": 1.0, "cost": 0.5},
+        ]
+        out = _price_positions(positions)
+        marks = [entry["mark"] for entry in out]
+        assert marks[0] is not None
+        assert marks[1] is None
+        assert marks[2] is not None

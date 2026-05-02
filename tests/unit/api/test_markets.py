@@ -1,14 +1,22 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import httpx
+import pytest
 
+import polymarket.api.markets as markets_module
 from polymarket.api.markets import (
     _normalize,
     _parse_json_field,
+    fetch_market,
     get_all_active_markets,
     get_market_by_id,
     get_markets,
 )
+
+
+@pytest.fixture(autouse=True)
+def _clear_market_cache() -> None:
+    markets_module._market_cache.clear()
 
 
 class TestParseJsonField:
@@ -207,3 +215,90 @@ class TestGetMarketById:
         mock_client.get.return_value = {}
 
         assert get_market_by_id("123", client=mock_client) is None
+
+
+class TestFetchMarket:
+    def test_returns_none_for_blank_query(self) -> None:
+        client = MagicMock()
+        assert fetch_market("", client=client) is None
+        assert fetch_market("   ", client=client) is None
+        client.get.assert_not_called()
+
+    def test_dispatches_to_id_lookup_when_query_is_digits(self, raw_market: dict) -> None:
+        client = MagicMock()
+        client.get.return_value = [raw_market]
+        result = fetch_market("123", client=client)
+        assert result is not None
+        client.get.assert_called_once_with("/markets", params={"id": "123", "limit": 1})
+
+    def test_dispatches_to_slug_lookup_when_query_is_text(self, raw_market: dict) -> None:
+        client = MagicMock()
+        client.get.return_value = [raw_market]
+        result = fetch_market("will-x-happen", client=client)
+        assert result is not None
+        client.get.assert_called_once_with(
+            "/markets", params={"slug": "will-x-happen", "limit": 1}
+        )
+
+    def test_returns_none_when_lookup_fails_after_attempts(self) -> None:
+        client = MagicMock()
+        client.get.return_value = []
+        with patch.object(markets_module.time, "sleep"):
+            assert fetch_market("missing-slug", client=client, attempts=3) is None
+        assert client.get.call_count == 3
+
+    def test_retries_until_market_found(self, raw_market: dict) -> None:
+        client = MagicMock()
+        client.get.side_effect = [[], [], [raw_market]]
+        with patch.object(markets_module.time, "sleep"):
+            result = fetch_market("slug", client=client, attempts=3)
+        assert result is not None
+        assert client.get.call_count == 3
+
+    def test_swallows_http_errors_and_continues(self, raw_market: dict) -> None:
+        client = MagicMock()
+        err = httpx.HTTPError("boom")
+        client.get.side_effect = [err, [raw_market]]
+        with patch.object(markets_module.time, "sleep"):
+            result = fetch_market("slug", client=client, attempts=3)
+        assert result is not None
+        assert client.get.call_count == 2
+
+
+class TestFetchMarketCaching:
+    def test_caches_successful_lookup(self, raw_market: dict) -> None:
+        client = MagicMock()
+        client.get.return_value = [raw_market]
+        fetch_market("123", client=client)
+        fetch_market("123", client=client)
+        assert client.get.call_count == 1
+
+    def test_cache_key_is_normalized(self, raw_market: dict) -> None:
+        client = MagicMock()
+        client.get.return_value = [raw_market]
+        fetch_market("Will-X-Happen", client=client)
+        fetch_market("  will-x-happen  ", client=client)
+        assert client.get.call_count == 1
+
+    def test_id_and_slug_use_distinct_cache_keys(self, raw_market: dict) -> None:
+        client = MagicMock()
+        client.get.return_value = [raw_market]
+        fetch_market("123", client=client)
+        fetch_market("will-x-happen", client=client)
+        assert client.get.call_count == 2
+
+    def test_caches_misses_to_avoid_retry_storms(self) -> None:
+        client = MagicMock()
+        client.get.return_value = []
+        with patch.object(markets_module.time, "sleep"):
+            assert fetch_market("missing", client=client, attempts=3) is None
+            assert fetch_market("missing", client=client, attempts=3) is None
+        assert client.get.call_count == 3
+
+    def test_clear_forces_refetch(self, raw_market: dict) -> None:
+        client = MagicMock()
+        client.get.return_value = [raw_market]
+        fetch_market("123", client=client)
+        markets_module._market_cache.clear()
+        fetch_market("123", client=client)
+        assert client.get.call_count == 2
