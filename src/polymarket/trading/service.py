@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any
 
@@ -13,6 +14,8 @@ from polymarket.trading.pricing import (
     _resolve_outcome_price,
     _sell_fill_price,
 )
+
+_PRICE_MAX_WORKERS = 8
 
 MARKET_LOAD_FAILED = (
     "This market could not be loaded after 3 attempts — it most likely ended or was removed. "
@@ -52,6 +55,29 @@ def _name_taken(conn: Connection, name: str, owner_id: int, exclude_id: int | No
             (owner_id, key, exclude_id),
         )
     return len(rows) > 0
+
+
+def _price_position(pos: dict[str, Any]) -> dict[str, Any]:
+    mid = str(pos["market_id"])
+    oc = str(pos["outcome"])
+    market = fetch_market(mid)
+    mark: float | None = None
+    if market is not None:
+        try:
+            mark = _mark_price(market, oc)
+        except ValueError:
+            mark = None
+    return {"position": pos, "market": market, "mark": mark}
+
+
+def _price_positions(positions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not positions:
+        return []
+    if len(positions) == 1:
+        return [_price_position(positions[0])]
+    workers = min(_PRICE_MAX_WORKERS, len(positions))
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        return list(ex.map(_price_position, positions))
 
 
 def _resolve_portfolio_id(conn: Connection, portfolio: int | str, access: Access) -> int:
@@ -212,77 +238,64 @@ class TradingService:
                 raise ValueError("portfolio not found")
             balance = float(rows[0]["balance"])
             pname = str(rows[0]["name"])
-            positions = self._load_positions_rows_for(conn, pid)
-            total_invested = 0.0
-            unrealized = 0.0
-            market_value = 0.0
-            for pos in positions:
-                cost = float(pos["cost"])
-                sh = float(pos["shares"])
-                total_invested += cost
-                mid = str(pos["market_id"])
-                oc = str(pos["outcome"])
-                m = fetch_market(mid)
-                if not m:
-                    continue
-                try:
-                    cur = _mark_price(m, oc)
-                except ValueError:
-                    continue
-                mv = sh * cur
-                market_value += mv
-                unrealized += mv - cost
-            equity = balance + market_value
-            return {
-                "portfolio_id": pid,
-                "name": pname,
-                "balance": balance,
-                "total_invested": total_invested,
-                "unrealized_pnl": unrealized,
-                "positions_market_value": market_value,
-                "equity": equity,
-            }
+            positions = [_as_dict(p) for p in self._load_positions_rows_for(conn, pid)]
         finally:
             conn.close()
+
+        priced = _price_positions(positions)
+        total_invested = 0.0
+        unrealized = 0.0
+        market_value = 0.0
+        for entry in priced:
+            pos = entry["position"]
+            cost = float(pos["cost"])
+            sh = float(pos["shares"])
+            total_invested += cost
+            cur = entry["mark"]
+            if cur is None:
+                continue
+            mv = sh * cur
+            market_value += mv
+            unrealized += mv - cost
+        equity = balance + market_value
+        return {
+            "portfolio_id": pid,
+            "name": pname,
+            "balance": balance,
+            "total_invested": total_invested,
+            "unrealized_pnl": unrealized,
+            "positions_market_value": market_value,
+            "equity": equity,
+        }
 
     def get_positions(self, portfolio: int | str | None = None) -> list[dict[str, Any]]:
         conn = get_connection()
         try:
             pid = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
-            rows = self._load_positions_rows_for(conn, pid)
-            out: list[dict[str, Any]] = []
-            for pos in rows:
-                d = _as_dict(pos)
-                mid = str(d["market_id"])
-                oc = str(d["outcome"])
-                sh = float(d["shares"])
-                cost = float(d["cost"])
-                m = fetch_market(mid)
-                if not m:
-                    d["current_price"] = None
-                    d["market_value"] = None
-                    d["unrealized_pnl"] = None
-                    d["market_load_error"] = MARKET_LOAD_FAILED
-                    out.append(d)
-                    continue
-                try:
-                    cur = _mark_price(m, oc)
-                except ValueError:
-                    d["current_price"] = None
-                    d["market_value"] = None
-                    d["unrealized_pnl"] = None
-                    d["market_load_error"] = MARKET_LOAD_FAILED
-                    out.append(d)
-                    continue
+            positions = [_as_dict(r) for r in self._load_positions_rows_for(conn, pid)]
+        finally:
+            conn.close()
+
+        priced = _price_positions(positions)
+        out: list[dict[str, Any]] = []
+        for entry in priced:
+            d = entry["position"]
+            sh = float(d["shares"])
+            cost = float(d["cost"])
+            cur = entry["mark"]
+            if cur is None:
+                d["current_price"] = None
+                d["market_value"] = None
+                d["unrealized_pnl"] = None
+                d["market_load_error"] = MARKET_LOAD_FAILED
+            else:
                 mv = sh * cur
                 d["current_price"] = cur
                 d["market_value"] = mv
                 d["unrealized_pnl"] = mv - cost
                 d["market_load_error"] = None
-                out.append(d)
-            return out
-        finally:
-            conn.close()
+            out.append(d)
+        return out
 
     def get_trades(self, portfolio: int | str | None = None) -> list[dict[str, Any]]:
         conn = get_connection()

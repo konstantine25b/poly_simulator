@@ -3,9 +3,12 @@ import time
 
 import httpx
 
+from polymarket.api.cache import TTLCache
 from polymarket.api.client import PolymarketClient, gamma_client
 
 _DEFAULT_LIMIT = 100
+
+_market_cache = TTLCache(ttl_seconds=30.0, miss_ttl_seconds=10.0, max_size=2048)
 
 
 def _parse_json_field(value: str | None) -> list:
@@ -103,7 +106,9 @@ def get_market_by_slug(slug: str, client: PolymarketClient | None = None) -> dic
     return _normalize(results[0])
 
 
-def fetch_market(query: str, client: PolymarketClient | None = None, attempts: int = 3) -> dict | None:
+def _fetch_market_uncached(
+    query: str, client: PolymarketClient | None, attempts: int
+) -> dict | None:
     owns = client is None
     c = client or gamma_client()
     try:
@@ -123,3 +128,12 @@ def fetch_market(query: str, client: PolymarketClient | None = None, attempts: i
     finally:
         if owns:
             c.close()
+
+
+def fetch_market(query: str, client: PolymarketClient | None = None, attempts: int = 3) -> dict | None:
+    if not isinstance(query, str) or not query.strip():
+        return None
+    key = query.strip().lower()
+    return _market_cache.get_or_compute(
+        key, lambda: _fetch_market_uncached(query, client, attempts)
+    )
