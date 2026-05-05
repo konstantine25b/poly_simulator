@@ -1,0 +1,48 @@
+.footer-shell {
+  margin-top: auto;
+  border-top: 1px solid rgba(45, 58, 75, 0.55);
+  background: rgba(12, 15, 18, 0.55);
+}
+
+.footer-bar {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0.85rem clamp(0.85rem, 3.5vw, 1.35rem);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+}
+
+.footer-copy {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7a90;
+}
+
+.footer-x {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #b4c0d4;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid rgba(45, 58, 75, 0.65);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.footer-x:hover {
+  color: #f4f7fb;
+  border-color: #3d6fd4;
+  background: rgba(61, 111, 212, 0.08);
+}
+
+.footer-x-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}

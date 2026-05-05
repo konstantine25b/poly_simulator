@@ -105,6 +105,31 @@
   flex-shrink: 0;
 }
 
+.nav-x {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  margin-left: 0.15rem;
+  border-radius: 9px;
+  border: 1px solid rgba(45, 58, 75, 0.85);
+  color: #b4c0d4;
+  text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.nav-x:hover {
+  color: #f4f7fb;
+  border-color: #3d6fd4;
+  background: rgba(61, 111, 212, 0.1);
+}
+
+.nav-x-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
 .nav-user {
   display: flex;
   align-items: center;

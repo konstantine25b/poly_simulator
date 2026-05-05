@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { Footer } from "./components/Footer.jsx";
 import { Navbar } from "./components/Navbar.jsx";
 import { RequireAuth } from "./features/auth/components/RequireAuth.jsx";
 import { AuthProvider } from "./features/auth/context/AuthContext.jsx";
@@ -15,10 +16,11 @@ function AppShell({ children }) {
   const { pathname } = useLocation();
   const hideNav = HIDE_NAV_ROUTES.includes(pathname);
   return (
-    <>
+    <div className="app-root">
       {hideNav ? null : <Navbar />}
-      {children}
-    </>
+      <div className="app-main">{children}</div>
+      <Footer />
+    </div>
   );
 }
 
