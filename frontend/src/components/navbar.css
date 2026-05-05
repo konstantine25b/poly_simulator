@@ -233,6 +233,10 @@
 }
 
 @media (max-width: 720px) {
+  .nav-shell {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
   .nav-brand-tag {
     display: none;
   }

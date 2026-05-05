@@ -514,3 +514,57 @@
   font-size: 0.85rem;
   color: #8b96a8;
 }
+
+@media (max-width: 720px) {
+  .mkt-app {
+    padding-top: 0.85rem;
+    padding-bottom: 1.75rem;
+  }
+
+  .mkt-hero-card {
+    padding: 0.95rem 1rem;
+  }
+
+  .mkt-hero-sub {
+    font-size: 0.88rem;
+    max-width: none;
+  }
+
+  .mkt-toolbar {
+    margin-top: 1rem;
+    padding: 0.95rem 1rem;
+  }
+
+  .mkt-toolbar-row:not(.mkt-toolbar-sort) {
+    justify-content: flex-start;
+  }
+
+  .mkt-filter {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.86rem;
+  }
+
+  .mkt-search {
+    padding: 0.75rem 0.95rem;
+    font-size: 1rem;
+  }
+
+  .mkt-sort-select {
+    padding: 0.55rem 0.65rem;
+    font-size: 1rem;
+  }
+
+  .mkt-card {
+    padding: 1rem 1.05rem;
+  }
+
+  .mkt-title {
+    font-size: 0.9rem;
+    -webkit-line-clamp: 4;
+  }
+
+  .mkt-navbtn {
+    padding: 0.55rem 1rem;
+    min-height: 44px;
+  }
+}

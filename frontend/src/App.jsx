@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Footer } from "./components/Footer.jsx";
+import { MobileBottomNav } from "./components/MobileBottomNav.jsx";
 import { Navbar } from "./components/Navbar.jsx";
 import { RequireAuth } from "./features/auth/components/RequireAuth.jsx";
 import { AuthProvider } from "./features/auth/context/AuthContext.jsx";
@@ -20,6 +21,7 @@ function AppShell({ children }) {
       {hideNav ? null : <Navbar />}
       <div className="app-main">{children}</div>
       <Footer />
+      {hideNav ? null : <MobileBottomNav />}
     </div>
   );
 }

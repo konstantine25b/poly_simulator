@@ -1,3 +1,5 @@
+import { usePhoneLayout } from "../../../hooks/usePhoneLayout.js";
+
 const SORT_OPTIONS = [
   ["created_desc", "Newest (created)"],
   ["created_asc", "Oldest (created)"],
@@ -21,6 +23,7 @@ export function MarketsToolbar({
   pageSize,
   onPageSize,
 }) {
+  const isPhone = usePhoneLayout();
   return (
     <div className="mkt-toolbar">
       <label className="mkt-search-lbl">Catalog (database)</label>
@@ -72,13 +75,15 @@ export function MarketsToolbar({
             </button>
           ))}
         </div>
-        <label className="mkt-pagesize">
-          <span className="mkt-pagesize-lbl">Per page</span>
-          <select value={pageSize} onChange={(ev) => onPageSize(Number(ev.target.value))}>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-        </label>
+        {isPhone ? null : (
+          <label className="mkt-pagesize">
+            <span className="mkt-pagesize-lbl">Per page</span>
+            <select value={pageSize} onChange={(ev) => onPageSize(Number(ev.target.value))}>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </label>
+        )}
       </div>
     </div>
   );

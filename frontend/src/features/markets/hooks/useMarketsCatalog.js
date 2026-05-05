@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiBase } from "../../../config.js";
+import { usePhoneLayout } from "../../../hooks/usePhoneLayout.js";
 import { buildMarketsQuery } from "../query/buildMarketsQuery.js";
 import { fetchGammaMarketByQuery } from "../query/fetchGammaMarketByQuery.js";
 import { fetchMarketsPage } from "../query/fetchMarketsPage.js";
@@ -11,6 +12,7 @@ import {
 } from "../query/marketsCache.js";
 
 export function useMarketsCatalog() {
+  const isPhone = usePhoneLayout();
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("created_desc");
   const [qInput, setQInput] = useState("");
@@ -20,7 +22,8 @@ export function useMarketsCatalog() {
   const [gammaMarket, setGammaMarket] = useState(null);
   const [gammaLoading, setGammaLoading] = useState(false);
   const [gammaErr, setGammaErr] = useState(null);
-  const [pageSize, setPageSize] = useState(50);
+  const [pageSizeDesktop, setPageSizeDesktop] = useState(50);
+  const pageSize = isPhone ? 10 : pageSizeDesktop;
   const [page, setPage] = useState(0);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -134,7 +137,7 @@ export function useMarketsCatalog() {
     gammaLoading,
     gammaErr,
     pageSize,
-    setPageSize,
+    setPageSize: setPageSizeDesktop,
     page,
     setPage,
     loading,
