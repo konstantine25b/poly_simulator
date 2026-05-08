@@ -17,7 +17,17 @@ import {
   recomputeSummary,
   uniqueMarketRefs,
 } from "../livePortfolio.js";
-import { closePosition, settlePosition } from "../query/portfoliosApi.js";
+import {
+  closePosition,
+  fetchPortfolioSummary,
+  fetchPortfolioTrades,
+  settlePosition,
+} from "../query/portfoliosApi.js";
+import {
+  buildPortfolioTradesCsv,
+  downloadTextFile,
+  safeFilenamePart,
+} from "../utils/exportPortfolioTradesCsv.js";
 import "../auth.css";
 import "../portfolioDetail.css";
 
@@ -46,6 +56,8 @@ export function PortfolioDetailPage() {
   const [sellTargetId, setSellTargetId] = useState(null);
   const [settleTargetId, setSettleTargetId] = useState(null);
   const [liveByMarket, setLiveByMarket] = useState({});
+  const [exportTradesBusy, setExportTradesBusy] = useState(false);
+  const [exportTradesErr, setExportTradesErr] = useState(null);
 
   const positions = data?.positions || [];
   const trades = data?.trades || [];
@@ -95,6 +107,34 @@ export function PortfolioDetailPage() {
   const handleSettle = async (body) => {
     await settlePosition(token, portfolioId, body);
     await refresh();
+  };
+
+  const handleExportTradesCsv = async () => {
+    if (!token || !portfolioId) return;
+    setExportTradesErr(null);
+    setExportTradesBusy(true);
+    try {
+      const [trRes, sumRes] = await Promise.allSettled([
+        fetchPortfolioTrades(token, portfolioId),
+        fetchPortfolioSummary(token, portfolioId),
+      ]);
+      if (trRes.status === "rejected") throw trRes.reason;
+      const list = Array.isArray(trRes.value) ? trRes.value : [];
+      const sum =
+        sumRes.status === "fulfilled" && sumRes.value && typeof sumRes.value === "object"
+          ? sumRes.value
+          : null;
+      const csv = buildPortfolioTradesCsv(list, sum);
+      const stamp = new Date().toISOString().slice(0, 10);
+      const snap = liveSummary || summaryBase;
+      const label = snap?.name || `portfolio-${portfolioId}`;
+      const base = safeFilenamePart(label);
+      downloadTextFile(`${base}-trades-${stamp}.csv`, csv);
+    } catch (e) {
+      setExportTradesErr(e.message || String(e));
+    } finally {
+      setExportTradesBusy(false);
+    }
   };
 
   const summary = liveSummary || summaryBase;
@@ -186,10 +226,25 @@ export function PortfolioDetailPage() {
         </section>
 
         <section className="prof-section">
-          <div className="prof-section-head">
-            <h2 className="prof-section-title">Trade history</h2>
-            <span className="pd-section-count">{trades.length}</span>
+          <div className="prof-section-head pd-trade-history-head">
+            <div className="pd-section-head-main">
+              <h2 className="prof-section-title">Trade history</h2>
+              <span className="pd-section-count">{trades.length}</span>
+            </div>
+            <button
+              type="button"
+              className="auth-btn auth-btn-ghost pd-export-csv-btn"
+              onClick={handleExportTradesCsv}
+              disabled={!token || !portfolioId || exportTradesBusy}
+            >
+              {exportTradesBusy ? "Exporting…" : "Export CSV"}
+            </button>
           </div>
+          {exportTradesErr ? (
+            <div className="pd-export-csv-err" role="alert">
+              {exportTradesErr}
+            </div>
+          ) : null}
           <TradeList trades={trades} />
         </section>
       </div>

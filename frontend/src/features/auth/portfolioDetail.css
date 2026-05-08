@@ -71,6 +71,27 @@
   font-variant-numeric: tabular-nums;
 }
 
+.pd-trade-history-head {
+  align-items: flex-start;
+}
+
+.pd-section-head-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.pd-export-csv-btn {
+  flex-shrink: 0;
+}
+
+.pd-export-csv-err {
+  font-size: 0.85rem;
+  color: #f5a0a0;
+  margin-top: -0.35rem;
+}
+
 .pd-empty {
   padding: 1.25rem 1.4rem;
   border-radius: 14px;
