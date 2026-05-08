@@ -40,8 +40,6 @@ ENV/
 data/
 *.csv
 *.parquet
-*.json
-!env.example.json
 logs/
 *.log
 output/
