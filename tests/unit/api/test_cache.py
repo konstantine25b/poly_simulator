@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import time
+from collections.abc import Callable
 from unittest.mock import MagicMock
 
 from polymarket.api.cache import TTLCache
@@ -80,8 +81,12 @@ class TestTTLCacheInvalidation:
 class TestTTLCacheEviction:
     def test_evicts_when_over_max_size(self) -> None:
         cache = TTLCache(ttl_seconds=10.0, max_size=4)
+
+        def make_int(v: int) -> Callable[[], int]:
+            return lambda: v
+
         for i in range(4):
-            cache.get_or_compute(i, lambda i=i: i)
+            cache.get_or_compute(i, make_int(i))
         cache.get_or_compute(99, lambda: 99)
         assert cache.get_or_compute(99, lambda: -1) == 99
         recomputed = 0
@@ -98,8 +103,11 @@ class TestTTLCacheThreadSafety:
         cache = TTLCache(ttl_seconds=5.0)
 
         def worker(key: int) -> None:
+            def make_val(k: int) -> Callable[[], str]:
+                return lambda: f"v{k}"
+
             for _ in range(50):
-                cache.get_or_compute(key % 8, lambda k=key: f"v{k}")
+                cache.get_or_compute(key % 8, make_val(key))
 
         threads = [threading.Thread(target=worker, args=(i,)) for i in range(16)]
         for t in threads:
