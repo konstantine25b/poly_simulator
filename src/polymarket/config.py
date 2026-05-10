@@ -57,6 +57,11 @@ class Settings(BaseSettings):
 
     refresh_api_key: str = Field(default="", validation_alias="REFRESH_API_KEY")
 
+    catalog_schedule_enabled: bool = Field(
+        default=True,
+        validation_alias="CATALOG_SCHEDULE_ENABLED",
+    )
+
     @property
     def postgres_dsn(self) -> str:
         return (
