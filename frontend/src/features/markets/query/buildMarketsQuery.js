@@ -1,4 +1,12 @@
-export function buildMarketsQuery(filter, q, page, pageSize, sort) {
+export function buildMarketsQuery(
+  filter,
+  q,
+  page,
+  pageSize,
+  sort,
+  acceptingOrdersOnly,
+  minVolume,
+) {
   const p = new URLSearchParams();
   p.set("limit", String(pageSize));
   p.set("offset", String(page * pageSize));
@@ -10,5 +18,7 @@ export function buildMarketsQuery(filter, q, page, pageSize, sort) {
   } else if (filter === "closed") {
     p.set("closed", "true");
   }
+  if (acceptingOrdersOnly) p.set("accepting_orders", "true");
+  if (minVolume != null && minVolume > 0) p.set("min_volume", String(minVolume));
   return p.toString();
 }

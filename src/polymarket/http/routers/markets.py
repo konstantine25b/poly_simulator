@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials
 
 from polymarket.api.markets import fetch_market, get_markets
@@ -52,9 +52,18 @@ def get_db_markets(
     closed: bool | None = None,
     q: str | None = None,
     sort: str | None = None,
+    accepting_orders: bool | None = Query(None),
+    min_volume: float | None = Query(None, ge=0),
 ) -> dict[str, Any]:
     return list_markets_from_db(
-        limit=limit, offset=offset, active=active, closed=closed, q=q, sort=sort
+        limit=limit,
+        offset=offset,
+        active=active,
+        closed=closed,
+        q=q,
+        sort=sort,
+        accepting_orders=accepting_orders,
+        min_volume=min_volume,
     )
 
 

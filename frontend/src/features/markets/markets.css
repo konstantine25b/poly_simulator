@@ -142,6 +142,76 @@
   width: 100%;
 }
 
+.mkt-toolbar-filter-block {
+  align-items: flex-start;
+}
+
+.mkt-filter-heading {
+  flex: 1 1 100%;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7a90;
+  margin: 0;
+}
+
+.mkt-filter-block-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mkt-filter-check {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  color: #b4c0d4;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mkt-filter-check input {
+  accent-color: #4d7fd4;
+  width: 1rem;
+  height: 1rem;
+}
+
+.mkt-filter-minvol {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  color: #8b96a8;
+}
+
+.mkt-filter-minvol-lbl {
+  white-space: nowrap;
+}
+
+.mkt-filter-minvol-input {
+  font: inherit;
+  width: 7rem;
+  max-width: 100%;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid #2a3340;
+  background: #141a22;
+  color: inherit;
+}
+
+@media (max-width: 560px) {
+  .mkt-filter-block-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .mkt-sort {
   display: flex;
   align-items: center;

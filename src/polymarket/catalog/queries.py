@@ -85,6 +85,8 @@ def list_markets_from_db(
     closed: bool | None = None,
     q: str | None = None,
     sort: str | None = None,
+    accepting_orders: bool | None = None,
+    min_volume: float | None = None,
 ) -> dict[str, Any]:
     lim = max(1, min(500, limit))
     off = max(0, offset)
@@ -104,6 +106,14 @@ def list_markets_from_db(
         else:
             conds.append(f"(question LIKE {ph} OR slug LIKE {ph})")
         params.extend([needle, needle])
+    if accepting_orders is True:
+        ao = _sql_col("acceptingOrders", "acceptingorders")
+        conds.append(f"{ao} = {ph}")
+        params.append(1)
+    if min_volume is not None and min_volume > 0:
+        vn = _sql_col("volumeNum", "volumenum")
+        conds.append(f"({vn} IS NOT NULL AND {vn} >= {ph})")
+        params.append(min_volume)
     where_sql = " AND ".join(conds)
     order_sql = _order_by_sql(sort)
     conn = get_connection()

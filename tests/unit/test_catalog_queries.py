@@ -111,6 +111,43 @@ class TestListMarketsFromDb:
         out = queries.list_markets_from_db(sort="volume_desc", limit=10, offset=0)
         assert [r["id"] for r in out["items"]] == ["m_hi", "m_lo"]
 
+    def test_filters_accepting_orders_and_min_volume(self, catalog_db: Path) -> None:
+        conn = get_connection()
+        upsert_markets(
+            conn,
+            [
+                {
+                    "id": "m_orders",
+                    "question": "Orders on",
+                    "slug": "orders-on",
+                    "active": 1,
+                    "closed": 0,
+                    "acceptingOrders": 1,
+                    "volumeNum": 5000.0,
+                    "createdAt": "2020-01-01T00:00:00Z",
+                    "outcomes": '["Y"]',
+                },
+                {
+                    "id": "m_no_orders",
+                    "question": "Orders off",
+                    "slug": "orders-off",
+                    "active": 1,
+                    "closed": 0,
+                    "acceptingOrders": 0,
+                    "volumeNum": 9000.0,
+                    "createdAt": "2020-01-02T00:00:00Z",
+                    "outcomes": '["Y"]',
+                },
+            ],
+        )
+        conn.close()
+        ao = queries.list_markets_from_db(accepting_orders=True)
+        assert ao["total"] == 1
+        assert ao["items"][0]["id"] == "m_orders"
+        mv = queries.list_markets_from_db(min_volume=6000.0)
+        assert mv["total"] == 1
+        assert mv["items"][0]["id"] == "m_no_orders"
+
 
 class TestMarketFromDb:
     def test_by_id_and_slug(self, catalog_db: Path) -> None:
