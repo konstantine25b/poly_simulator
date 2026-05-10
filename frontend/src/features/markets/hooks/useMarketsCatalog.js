@@ -18,6 +18,10 @@ export function useMarketsCatalog() {
   const [acceptingOrdersOnly, setAcceptingOrdersOnly] = useState(false);
   const [minVolumeInput, setMinVolumeInput] = useState("");
   const [minVolume, setMinVolume] = useState(null);
+  const [startDateFrom, setStartDateFrom] = useState("");
+  const [startDateTo, setStartDateTo] = useState("");
+  const [endDateFrom, setEndDateFrom] = useState("");
+  const [endDateTo, setEndDateTo] = useState("");
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
   const [gammaInput, setGammaInput] = useState("");
@@ -96,7 +100,18 @@ export function useMarketsCatalog() {
 
   useEffect(() => {
     setPage(0);
-  }, [filter, q, pageSize, sort, acceptingOrdersOnly, minVolume]);
+  }, [
+    filter,
+    q,
+    pageSize,
+    sort,
+    acceptingOrdersOnly,
+    minVolume,
+    startDateFrom,
+    startDateTo,
+    endDateFrom,
+    endDateTo,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,6 +123,10 @@ export function useMarketsCatalog() {
       sort,
       acceptingOrdersOnly,
       minVolume,
+      startDateFrom,
+      startDateTo,
+      endDateFrom,
+      endDateTo,
     );
     const cached = getCachedPage(qs);
     if (cached) {
@@ -137,7 +156,19 @@ export function useMarketsCatalog() {
     return () => {
       cancelled = true;
     };
-  }, [filter, q, page, pageSize, sort, acceptingOrdersOnly, minVolume]);
+  }, [
+    filter,
+    q,
+    page,
+    pageSize,
+    sort,
+    acceptingOrdersOnly,
+    minVolume,
+    startDateFrom,
+    startDateTo,
+    endDateFrom,
+    endDateTo,
+  ]);
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
@@ -157,6 +188,14 @@ export function useMarketsCatalog() {
     setAcceptingOrdersOnly,
     minVolumeInput,
     setMinVolumeInput,
+    startDateFrom,
+    setStartDateFrom,
+    startDateTo,
+    setStartDateTo,
+    endDateFrom,
+    setEndDateFrom,
+    endDateTo,
+    setEndDateTo,
     qInput,
     setQInput,
     gammaInput,

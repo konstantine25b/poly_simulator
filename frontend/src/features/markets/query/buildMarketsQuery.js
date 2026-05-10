@@ -6,6 +6,10 @@ export function buildMarketsQuery(
   sort,
   acceptingOrdersOnly,
   minVolume,
+  startDateFrom,
+  startDateTo,
+  endDateFrom,
+  endDateTo,
 ) {
   const p = new URLSearchParams();
   p.set("limit", String(pageSize));
@@ -20,5 +24,9 @@ export function buildMarketsQuery(
   }
   if (acceptingOrdersOnly) p.set("accepting_orders", "true");
   if (minVolume != null && minVolume > 0) p.set("min_volume", String(minVolume));
+  if (startDateFrom) p.set("start_date_from", startDateFrom);
+  if (startDateTo) p.set("start_date_to", startDateTo);
+  if (endDateFrom) p.set("end_date_from", endDateFrom);
+  if (endDateTo) p.set("end_date_to", endDateTo);
   return p.toString();
 }

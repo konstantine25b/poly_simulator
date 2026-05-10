@@ -24,31 +24,59 @@ export function MarketsToolbar({
   onAcceptingOrdersOnly,
   minVolumeInput,
   onMinVolumeInput,
+  startDateFrom,
+  onStartDateFrom,
+  startDateTo,
+  onStartDateTo,
+  endDateFrom,
+  onEndDateFrom,
+  endDateTo,
+  onEndDateTo,
   pageSize,
   onPageSize,
 }) {
   const isPhone = usePhoneLayout();
   return (
     <div className="mkt-toolbar">
-      <label className="mkt-search-lbl">Catalog (database)</label>
-      <input
-        className="mkt-search"
-        type="search"
-        placeholder="Search question or slug in your DB…"
-        value={qInput}
-        onChange={(ev) => onQInput(ev.target.value)}
-        autoComplete="off"
-      />
-      <label className="mkt-search-lbl mkt-search-lbl-gamma">Polymarket (Gamma API)</label>
-      <input
-        className="mkt-search"
-        type="search"
-        placeholder="Exact market id (digits) or slug…"
-        value={gammaInput}
-        onChange={(ev) => onGammaInput(ev.target.value)}
-        autoComplete="off"
-      />
-      <div className="mkt-toolbar-row mkt-toolbar-sort">
+      <div className="mkt-toolbar-section">
+        <div className="mkt-toolbar-section-head">
+          <span className="mkt-toolbar-section-title">Catalog</span>
+          <span className="mkt-toolbar-section-hint">Search your synced database</span>
+        </div>
+        <label className="mkt-field-label" htmlFor="mkt-catalog-q">
+          Question or slug
+        </label>
+        <input
+          id="mkt-catalog-q"
+          className="mkt-input mkt-input-search"
+          type="search"
+          placeholder="Type to filter by question or slug…"
+          value={qInput}
+          onChange={(ev) => onQInput(ev.target.value)}
+          autoComplete="off"
+        />
+      </div>
+
+      <div className="mkt-toolbar-section">
+        <div className="mkt-toolbar-section-head">
+          <span className="mkt-toolbar-section-title">Polymarket lookup</span>
+          <span className="mkt-toolbar-section-hint">Live Gamma API by id or slug</span>
+        </div>
+        <label className="mkt-field-label" htmlFor="mkt-gamma-q">
+          Market id or slug
+        </label>
+        <input
+          id="mkt-gamma-q"
+          className="mkt-input mkt-input-search"
+          type="search"
+          placeholder="Digits or slug…"
+          value={gammaInput}
+          onChange={(ev) => onGammaInput(ev.target.value)}
+          autoComplete="off"
+        />
+      </div>
+
+      <div className="mkt-toolbar-row mkt-toolbar-controls">
         <label className="mkt-sort">
           <span className="mkt-sort-lbl">Sort</span>
           <select className="mkt-sort-select" value={sort} onChange={(ev) => onSort(ev.target.value)}>
@@ -59,53 +87,6 @@ export function MarketsToolbar({
             ))}
           </select>
         </label>
-      </div>
-      <div className="mkt-toolbar-row mkt-toolbar-filter-block">
-        <span className="mkt-filter-heading" id="mkt-filters-label">
-          Filters
-        </span>
-        <div className="mkt-filter-block-inner" role="group" aria-labelledby="mkt-filters-label">
-          <div className="mkt-filters" role="tablist" aria-label="Market status">
-            {[
-              ["all", "All"],
-              ["active", "Active"],
-              ["closed", "Closed"],
-            ].map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={filter === id}
-                className={`mkt-filter ${filter === id ? "on" : ""}`}
-                onClick={() => onFilter(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <label className="mkt-filter-check">
-            <input
-              type="checkbox"
-              checked={acceptingOrdersOnly}
-              onChange={(ev) => onAcceptingOrdersOnly(ev.target.checked)}
-            />
-            <span>Accepting orders</span>
-          </label>
-          <label className="mkt-filter-minvol">
-            <span className="mkt-filter-minvol-lbl">Min volume (USD)</span>
-            <input
-              className="mkt-filter-minvol-input"
-              type="number"
-              min="0"
-              step="any"
-              inputMode="decimal"
-              placeholder="Any"
-              value={minVolumeInput}
-              onChange={(ev) => onMinVolumeInput(ev.target.value)}
-              autoComplete="off"
-            />
-          </label>
-        </div>
         {isPhone ? null : (
           <label className="mkt-pagesize">
             <span className="mkt-pagesize-lbl">Per page</span>
@@ -115,6 +96,111 @@ export function MarketsToolbar({
             </select>
           </label>
         )}
+      </div>
+
+      <div className="mkt-filter-panel" role="region" aria-label="Catalog filters">
+        <div className="mkt-filter-panel-head">
+          <span className="mkt-filter-panel-title">Filters</span>
+          <span className="mkt-filter-panel-sub">Status, volume, and dates</span>
+        </div>
+
+        <div className="mkt-filter-panel-body">
+          <div className="mkt-filter-row mkt-filter-row-status">
+            <span className="mkt-filter-inline-lbl">Status</span>
+            <div className="mkt-filters" role="tablist" aria-label="Market status">
+              {[
+                ["all", "All"],
+                ["active", "Active"],
+                ["closed", "Closed"],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === id}
+                  className={`mkt-filter ${filter === id ? "on" : ""}`}
+                  onClick={() => onFilter(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mkt-filter-row mkt-filter-row-extras">
+            <label className="mkt-filter-check">
+              <input
+                type="checkbox"
+                checked={acceptingOrdersOnly}
+                onChange={(ev) => onAcceptingOrdersOnly(ev.target.checked)}
+              />
+              <span>Accepting orders</span>
+            </label>
+            <label className="mkt-filter-minvol">
+              <span className="mkt-filter-minvol-lbl">Min volume (USD)</span>
+              <input
+                className="mkt-input mkt-input-num"
+                type="number"
+                min="0"
+                step="any"
+                inputMode="decimal"
+                placeholder="Any"
+                value={minVolumeInput}
+                onChange={(ev) => onMinVolumeInput(ev.target.value)}
+                autoComplete="off"
+              />
+            </label>
+          </div>
+
+          <div className="mkt-date-ranges">
+            <fieldset className="mkt-date-range">
+              <legend className="mkt-date-range-legend">Start date</legend>
+              <div className="mkt-date-pair">
+                <label className="mkt-date-field">
+                  <span className="mkt-date-lbl">From</span>
+                  <input
+                    className="mkt-input mkt-input-date"
+                    type="date"
+                    value={startDateFrom}
+                    onChange={(ev) => onStartDateFrom(ev.target.value)}
+                  />
+                </label>
+                <label className="mkt-date-field">
+                  <span className="mkt-date-lbl">To</span>
+                  <input
+                    className="mkt-input mkt-input-date"
+                    type="date"
+                    value={startDateTo}
+                    onChange={(ev) => onStartDateTo(ev.target.value)}
+                  />
+                </label>
+              </div>
+            </fieldset>
+            <fieldset className="mkt-date-range">
+              <legend className="mkt-date-range-legend">End date</legend>
+              <div className="mkt-date-pair">
+                <label className="mkt-date-field">
+                  <span className="mkt-date-lbl">From</span>
+                  <input
+                    className="mkt-input mkt-input-date"
+                    type="date"
+                    value={endDateFrom}
+                    onChange={(ev) => onEndDateFrom(ev.target.value)}
+                  />
+                </label>
+                <label className="mkt-date-field">
+                  <span className="mkt-date-lbl">To</span>
+                  <input
+                    className="mkt-input mkt-input-date"
+                    type="date"
+                    value={endDateTo}
+                    onChange={(ev) => onEndDateTo(ev.target.value)}
+                  />
+                </label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
       </div>
     </div>
   );

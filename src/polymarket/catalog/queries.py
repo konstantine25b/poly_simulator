@@ -38,6 +38,29 @@ def _sql_col(sqlite_name: str, pg_name: str) -> str:
     return pg_name if settings.db_backend == "postgres" else sqlite_name
 
 
+def _parse_date_filter(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if not s:
+        return None
+    if len(s) >= 10:
+        s = s[:10]
+    if len(s) != 10 or s[4] != "-" or s[7] != "-":
+        return None
+    a, b, c = s.split("-")
+    if len(a) != 4 or not a.isdigit() or not b.isdigit() or not c.isdigit():
+        return None
+    return s
+
+
+def _date_norm_expr(sqlite_name: str, pg_name: str) -> str:
+    col = _sql_col(sqlite_name, pg_name)
+    if settings.db_backend == "postgres":
+        return f"NULLIF(LEFT(TRIM(COALESCE({col}::text, '')), 10), '')"
+    return f"NULLIF(substr(TRIM(IFNULL({col}, '')), 1, 10), '')"
+
+
 def _order_by_sql(sort: str | None) -> str:
     raw = (sort or "created_desc").strip().lower().replace("-", "_")
     aliases = {"newest": "created_desc", "oldest": "created_asc"}
@@ -87,6 +110,10 @@ def list_markets_from_db(
     sort: str | None = None,
     accepting_orders: bool | None = None,
     min_volume: float | None = None,
+    start_date_from: str | None = None,
+    start_date_to: str | None = None,
+    end_date_from: str | None = None,
+    end_date_to: str | None = None,
 ) -> dict[str, Any]:
     lim = max(1, min(500, limit))
     off = max(0, offset)
@@ -114,6 +141,24 @@ def list_markets_from_db(
         vn = _sql_col("volumeNum", "volumenum")
         conds.append(f"({vn} IS NOT NULL AND {vn} >= {ph})")
         params.append(min_volume)
+    sd_norm = _date_norm_expr("startDate", "startdate")
+    sf = _parse_date_filter(start_date_from)
+    if sf:
+        conds.append(f"({sd_norm} IS NOT NULL AND {sd_norm} >= {ph})")
+        params.append(sf)
+    st = _parse_date_filter(start_date_to)
+    if st:
+        conds.append(f"({sd_norm} IS NOT NULL AND {sd_norm} <= {ph})")
+        params.append(st)
+    ed_norm = _date_norm_expr("endDate", "enddate")
+    ef = _parse_date_filter(end_date_from)
+    if ef:
+        conds.append(f"({ed_norm} IS NOT NULL AND {ed_norm} >= {ph})")
+        params.append(ef)
+    et = _parse_date_filter(end_date_to)
+    if et:
+        conds.append(f"({ed_norm} IS NOT NULL AND {ed_norm} <= {ph})")
+        params.append(et)
     where_sql = " AND ".join(conds)
     order_sql = _order_by_sql(sort)
     conn = get_connection()
