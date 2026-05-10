@@ -6,12 +6,13 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from polymarket import db
+from polymarket import config, db
 
 
 @pytest.fixture
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Generator[TestClient, None, None]:
     monkeypatch.setattr(db, "DB_PATH", tmp_path / "api.db")
+    monkeypatch.setattr(config.settings, "catalog_schedule_enabled", False)
     monkeypatch.setattr(db.settings, "admin_bootstrap_email", "admin@test.local")
     monkeypatch.setattr(db.settings, "admin_bootstrap_password", "password12345")
     monkeypatch.setattr(db.settings, "jwt_secret", "unit-test-jwt-secret")
