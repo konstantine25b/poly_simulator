@@ -20,6 +20,10 @@ export function MarketsToolbar({
   onFilter,
   sort,
   onSort,
+  acceptingOrdersOnly,
+  onAcceptingOrdersOnly,
+  minVolumeInput,
+  onMinVolumeInput,
   pageSize,
   onPageSize,
 }) {
@@ -56,24 +60,51 @@ export function MarketsToolbar({
           </select>
         </label>
       </div>
-      <div className="mkt-toolbar-row">
-        <div className="mkt-filters" role="tablist">
-          {[
-            ["all", "All"],
-            ["active", "Active"],
-            ["closed", "Closed"],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={filter === id}
-              className={`mkt-filter ${filter === id ? "on" : ""}`}
-              onClick={() => onFilter(id)}
-            >
-              {label}
-            </button>
-          ))}
+      <div className="mkt-toolbar-row mkt-toolbar-filter-block">
+        <span className="mkt-filter-heading" id="mkt-filters-label">
+          Filters
+        </span>
+        <div className="mkt-filter-block-inner" role="group" aria-labelledby="mkt-filters-label">
+          <div className="mkt-filters" role="tablist" aria-label="Market status">
+            {[
+              ["all", "All"],
+              ["active", "Active"],
+              ["closed", "Closed"],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={filter === id}
+                className={`mkt-filter ${filter === id ? "on" : ""}`}
+                onClick={() => onFilter(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <label className="mkt-filter-check">
+            <input
+              type="checkbox"
+              checked={acceptingOrdersOnly}
+              onChange={(ev) => onAcceptingOrdersOnly(ev.target.checked)}
+            />
+            <span>Accepting orders</span>
+          </label>
+          <label className="mkt-filter-minvol">
+            <span className="mkt-filter-minvol-lbl">Min volume (USD)</span>
+            <input
+              className="mkt-filter-minvol-input"
+              type="number"
+              min="0"
+              step="any"
+              inputMode="decimal"
+              placeholder="Any"
+              value={minVolumeInput}
+              onChange={(ev) => onMinVolumeInput(ev.target.value)}
+              autoComplete="off"
+            />
+          </label>
         </div>
         {isPhone ? null : (
           <label className="mkt-pagesize">

@@ -15,6 +15,9 @@ export function useMarketsCatalog() {
   const isPhone = usePhoneLayout();
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("created_desc");
+  const [acceptingOrdersOnly, setAcceptingOrdersOnly] = useState(false);
+  const [minVolumeInput, setMinVolumeInput] = useState("");
+  const [minVolume, setMinVolume] = useState(null);
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
   const [gammaInput, setGammaInput] = useState("");
@@ -33,6 +36,19 @@ export function useMarketsCatalog() {
     const t = setTimeout(() => setQ(qInput.trim()), 320);
     return () => clearTimeout(t);
   }, [qInput]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const s = minVolumeInput.trim();
+      if (!s) {
+        setMinVolume(null);
+        return;
+      }
+      const n = Number(s);
+      setMinVolume(Number.isFinite(n) && n >= 0 ? n : null);
+    }, 320);
+    return () => clearTimeout(t);
+  }, [minVolumeInput]);
 
   useEffect(() => {
     const t = setTimeout(() => setGammaQuery(gammaInput.trim()), 420);
@@ -80,11 +96,19 @@ export function useMarketsCatalog() {
 
   useEffect(() => {
     setPage(0);
-  }, [filter, q, pageSize, sort]);
+  }, [filter, q, pageSize, sort, acceptingOrdersOnly, minVolume]);
 
   useEffect(() => {
     let cancelled = false;
-    const qs = buildMarketsQuery(filter, q, page, pageSize, sort);
+    const qs = buildMarketsQuery(
+      filter,
+      q,
+      page,
+      pageSize,
+      sort,
+      acceptingOrdersOnly,
+      minVolume,
+    );
     const cached = getCachedPage(qs);
     if (cached) {
       setData(cached.data);
@@ -113,7 +137,7 @@ export function useMarketsCatalog() {
     return () => {
       cancelled = true;
     };
-  }, [filter, q, page, pageSize, sort]);
+  }, [filter, q, page, pageSize, sort, acceptingOrdersOnly, minVolume]);
 
   const total = data?.total ?? 0;
   const items = data?.items ?? [];
@@ -129,6 +153,10 @@ export function useMarketsCatalog() {
     setFilter,
     sort,
     setSort,
+    acceptingOrdersOnly,
+    setAcceptingOrdersOnly,
+    minVolumeInput,
+    setMinVolumeInput,
     qInput,
     setQInput,
     gammaInput,

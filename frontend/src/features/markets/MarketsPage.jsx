@@ -12,6 +12,10 @@ export function MarketsPage() {
     setFilter,
     sort,
     setSort,
+    acceptingOrdersOnly,
+    setAcceptingOrdersOnly,
+    minVolumeInput,
+    setMinVolumeInput,
     qInput,
     setQInput,
     gammaInput,
@@ -43,6 +47,10 @@ export function MarketsPage() {
         onFilter={setFilter}
         sort={sort}
         onSort={setSort}
+        acceptingOrdersOnly={acceptingOrdersOnly}
+        onAcceptingOrdersOnly={setAcceptingOrdersOnly}
+        minVolumeInput={minVolumeInput}
+        onMinVolumeInput={setMinVolumeInput}
         pageSize={pageSize}
         onPageSize={setPageSize}
       />
