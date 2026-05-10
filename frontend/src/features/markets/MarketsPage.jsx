@@ -16,6 +16,14 @@ export function MarketsPage() {
     setAcceptingOrdersOnly,
     minVolumeInput,
     setMinVolumeInput,
+    startDateFrom,
+    setStartDateFrom,
+    startDateTo,
+    setStartDateTo,
+    endDateFrom,
+    setEndDateFrom,
+    endDateTo,
+    setEndDateTo,
     qInput,
     setQInput,
     gammaInput,
@@ -51,6 +59,14 @@ export function MarketsPage() {
         onAcceptingOrdersOnly={setAcceptingOrdersOnly}
         minVolumeInput={minVolumeInput}
         onMinVolumeInput={setMinVolumeInput}
+        startDateFrom={startDateFrom}
+        onStartDateFrom={setStartDateFrom}
+        startDateTo={startDateTo}
+        onStartDateTo={setStartDateTo}
+        endDateFrom={endDateFrom}
+        onEndDateFrom={setEndDateFrom}
+        endDateTo={endDateTo}
+        onEndDateTo={setEndDateTo}
         pageSize={pageSize}
         onPageSize={setPageSize}
       />

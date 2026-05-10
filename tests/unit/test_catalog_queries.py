@@ -148,6 +148,41 @@ class TestListMarketsFromDb:
         assert mv["total"] == 1
         assert mv["items"][0]["id"] == "m_no_orders"
 
+    def test_filters_start_and_end_dates(self, catalog_db: Path) -> None:
+        conn = get_connection()
+        upsert_markets(
+            conn,
+            [
+                {
+                    "id": "m_a",
+                    "question": "Early end",
+                    "slug": "early-end",
+                    "active": 1,
+                    "closed": 0,
+                    "startDate": "2024-03-01T12:00:00.000Z",
+                    "endDate": "2024-06-15T00:00:00.000Z",
+                    "createdAt": "2024-01-01T00:00:00Z",
+                    "outcomes": '["Y"]',
+                },
+                {
+                    "id": "m_b",
+                    "question": "Late window",
+                    "slug": "late-window",
+                    "active": 1,
+                    "closed": 0,
+                    "startDate": "2025-01-10T00:00:00.000Z",
+                    "endDate": "2026-01-01T00:00:00.000Z",
+                    "createdAt": "2024-06-01T00:00:00Z",
+                    "outcomes": '["Y"]',
+                },
+            ],
+        )
+        conn.close()
+        only_late_start = queries.list_markets_from_db(start_date_from="2025-01-01")
+        assert [r["id"] for r in only_late_start["items"]] == ["m_b"]
+        early_end = queries.list_markets_from_db(end_date_to="2024-12-31")
+        assert [r["id"] for r in early_end["items"]] == ["m_a"]
+
 
 class TestMarketFromDb:
     def test_by_id_and_slug(self, catalog_db: Path) -> None:

@@ -54,6 +54,10 @@ def get_db_markets(
     sort: str | None = None,
     accepting_orders: bool | None = Query(None),
     min_volume: float | None = Query(None, ge=0),
+    start_date_from: str | None = Query(None),
+    start_date_to: str | None = Query(None),
+    end_date_from: str | None = Query(None),
+    end_date_to: str | None = Query(None),
 ) -> dict[str, Any]:
     return list_markets_from_db(
         limit=limit,
@@ -64,6 +68,10 @@ def get_db_markets(
         sort=sort,
         accepting_orders=accepting_orders,
         min_volume=min_volume,
+        start_date_from=start_date_from,
+        start_date_to=start_date_to,
+        end_date_from=end_date_from,
+        end_date_to=end_date_to,
     )
 
 
