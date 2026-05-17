@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Footer } from "./components/Footer.jsx";
 import { MobileBottomNav } from "./components/MobileBottomNav.jsx";
 import { Navbar } from "./components/Navbar.jsx";
+import { ThemeProvider } from "./theme/ThemeContext.jsx";
 import { RequireAuth } from "./features/auth/components/RequireAuth.jsx";
 import { AuthProvider } from "./features/auth/context/AuthContext.jsx";
 import { LoginPage } from "./features/auth/pages/LoginPage.jsx";
@@ -28,8 +29,9 @@ function AppShell({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
         <AppShell>
           <Routes>
             <Route path="/" element={<MarketsPage />} />
@@ -54,7 +56,8 @@ export default function App() {
             />
           </Routes>
         </AppShell>
-      </BrowserRouter>
-    </AuthProvider>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
