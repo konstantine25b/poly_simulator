@@ -1,7 +1,7 @@
 .footer-shell {
   margin-top: auto;
-  border-top: 1px solid rgba(45, 58, 75, 0.55);
-  background: rgba(12, 15, 18, 0.55);
+  border-top: 1px solid var(--border-55);
+  background: var(--footer-bg);
 }
 
 .footer-bar {
@@ -18,27 +18,27 @@
 .footer-copy {
   margin: 0;
   font-size: 0.8rem;
-  color: #6b7a90;
+  color: var(--muted);
 }
 
 .footer-x {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: #b4c0d4;
+  color: var(--text-sub);
   text-decoration: none;
   font-size: 0.8rem;
   font-weight: 500;
   padding: 0.35rem 0.55rem;
   border-radius: 8px;
-  border: 1px solid rgba(45, 58, 75, 0.65);
+  border: 1px solid var(--border-65);
   transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
 .footer-x:hover {
-  color: #f4f7fb;
-  border-color: #3d6fd4;
-  background: rgba(61, 111, 212, 0.08);
+  color: var(--text-title);
+  border-color: var(--accent);
+  background: var(--accent-bg-08);
 }
 
 .footer-x-icon {
