@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import polymarketMark from "../../assets/polymarket.jpg";
 import { useAuth } from "../features/auth/context/AuthContext.jsx";
 import { POLYPTRADE_X_URL } from "../social.js";
+import { ThemeToggle } from "../theme/ThemeToggle.jsx";
 import "./navbar.css";
 
 function initialFor(email) {
@@ -80,6 +81,7 @@ export function Navbar() {
           </div>
 
           <div className="nav-actions">
+            <ThemeToggle />
             {booting ? (
               <span className="nav-skel" aria-hidden />
             ) : isAuthenticated ? (

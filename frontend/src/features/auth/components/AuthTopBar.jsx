@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "../../../theme/ThemeToggle.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import "../auth.css";
 
@@ -15,6 +16,7 @@ export function AuthTopBar() {
 
   return (
     <div className="auth-topbar">
+      <ThemeToggle className="auth-topbar-theme" />
       {isAuthenticated ? (
         <>
           <Link to="/profile" className="auth-topbar-user" title="View profile">
