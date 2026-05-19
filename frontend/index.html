@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Poly Simulator</title>
+    <title>PolyPTrade</title>
     <script>
       (function () {
         try {
-          var t = localStorage.getItem("poly-sim-theme");
+          var t = localStorage.getItem("poly-ptrade-theme") || localStorage.getItem("poly-sim-theme");
           document.documentElement.dataset.theme = t === "light" ? "light" : "dark";
         } catch (e) {
           document.documentElement.dataset.theme = "dark";

@@ -1,12 +1,16 @@
 import { createContext, useContext, useLayoutEffect, useMemo, useState } from "react";
 
-const STORAGE_KEY = "poly-sim-theme";
+const STORAGE_KEY = "poly-ptrade-theme";
 
 const ThemeContext = createContext(null);
 
 function readStoredTheme() {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
+    let v = localStorage.getItem(STORAGE_KEY);
+    if (v == null) {
+      v = localStorage.getItem("poly-sim-theme");
+      if (v != null) localStorage.setItem(STORAGE_KEY, v);
+    }
     return v === "light" ? "light" : "dark";
   } catch {
     return "dark";

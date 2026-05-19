@@ -3,9 +3,9 @@ requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "poly-simulator"
+name = "poly-ptrade"
 version = "0.1.0"
-description = "Prediction Market Simulator Based on Polymarket Data"
+description = "PolyPTrade — prediction market paper trading on Polymarket data"
 requires-python = ">=3.11"
 
 [tool.setuptools.packages.find]
