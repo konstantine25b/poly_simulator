@@ -97,9 +97,7 @@ export function MarketsPage() {
         pageInfo={pageInfo}
         page={page}
         totalPages={totalPages}
-        pageSize={pageSize}
-        onPrev={() => setPage((p) => p - 1)}
-        onNext={() => setPage((p) => p + 1)}
+        onPageChange={setPage}
       />
     </div>
   );
