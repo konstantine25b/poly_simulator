@@ -50,7 +50,7 @@ export function Navbar() {
         <Link to="/" className="nav-brand">
           <img className="nav-brand-logo" src={polymarketMark} alt="" />
           <span className="nav-brand-text">
-            <span className="nav-brand-name">Poly Simulator</span>
+            <span className="nav-brand-name">PolyPTrade</span>
             <span className="nav-brand-tag">Paper trading</span>
           </span>
         </Link>

@@ -29,7 +29,7 @@ export function LoginPage() {
         </Link>
         <div className="auth-brand">
           <img className="auth-brand-logo" src={polymarketMark} alt="" />
-          <span className="auth-brand-name">Poly Simulator</span>
+          <span className="auth-brand-name">PolyPTrade</span>
         </div>
         <h1 className="auth-title">Welcome back</h1>
         <p className="auth-sub">Log in to manage your paper portfolio and trade history.</p>

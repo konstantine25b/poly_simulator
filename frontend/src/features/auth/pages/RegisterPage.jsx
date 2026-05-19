@@ -27,7 +27,7 @@ export function RegisterPage() {
         </Link>
         <div className="auth-brand">
           <img className="auth-brand-logo" src={polymarketMark} alt="" />
-          <span className="auth-brand-name">Poly Simulator</span>
+          <span className="auth-brand-name">PolyPTrade</span>
         </div>
         <h1 className="auth-title">Create your account</h1>
         <p className="auth-sub">Start trading Polymarkets with a paper balance in seconds.</p>

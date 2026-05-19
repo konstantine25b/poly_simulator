@@ -100,7 +100,7 @@ _openapi_tags = [
     },
 ]
 
-app = FastAPI(title="Poly Simulator API", lifespan=lifespan, openapi_tags=_openapi_tags)
+app = FastAPI(title="PolyPTrade API", lifespan=lifespan, openapi_tags=_openapi_tags)
 
 app.include_router(auth.router)
 app.include_router(admin.router)

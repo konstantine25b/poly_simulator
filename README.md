@@ -1,4 +1,4 @@
-# Poly Simulator
+# PolyPTrade
 
 A web platform that lets users practice prediction market trading using real Polymarket data — with no real money at risk. Users can place virtual trades, track portfolio performance, and observe live market price changes.
 
@@ -71,7 +71,7 @@ _SQLite_ — nothing to do, the file is created automatically on first run.
 _PostgreSQL_ — create the database once:
 
 ```bash
-psql -U postgres -c "CREATE DATABASE poly_simulator;"
+psql -U postgres -c "CREATE DATABASE poly_ptrade;"
 ```
 
 **5. Seed market data**
