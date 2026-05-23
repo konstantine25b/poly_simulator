@@ -100,10 +100,6 @@ export function useMarketsCatalog() {
   }, [gammaQuery]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [page]);
-
-  useEffect(() => {
     setPage(0);
   }, [
     filter,
