@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import polymarketMark from "../../../../assets/polymarket.jpg";
+import { useBrandLogo } from "../../../theme/useBrandLogo.js";
 import { outcomePairs } from "../domain/outcomes.js";
 import { shouldShowLiveBadge } from "../domain/liveBadge.js";
 import { field } from "../domain/rowField.js";
@@ -9,6 +9,7 @@ import { formatDate, formatOutcomeOdds, formatUsdCompact } from "../format/forma
 const OUTCOME_CAP = 6;
 
 export function MarketCard({ market }) {
+  const polymarketMark = useBrandLogo();
   const id = field(market, "id");
   const question = field(market, "question") || id || "";
   const slug = field(market, "slug");

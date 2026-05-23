@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import polymarketMark from "../../../../assets/polymarket.jpg";
 import { BetWidget } from "../../auth/components/BetWidget.jsx";
 import { apiBase } from "../../../config.js";
+import { useBrandLogo } from "../../../theme/useBrandLogo.js";
 import { DETAIL_SECTIONS, formatDetailValue, pickField } from "../detailSections.js";
 import { fetchMarketDetail } from "../query/fetchMarketDetail.js";
 import { getCachedDetail, setCachedDetail } from "../query/marketsCache.js";
@@ -22,6 +22,7 @@ function humanKey(key) {
 
 export function MarketDetailPage() {
   const { marketRef } = useParams();
+  const polymarketMark = useBrandLogo();
   const initialCached = marketRef ? getCachedDetail(marketRef) : null;
   const [data, setData] = useState(initialCached?.data ?? null);
   const [loading, setLoading] = useState(!initialCached);

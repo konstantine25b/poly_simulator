@@ -1,5 +1,5 @@
 import { useState } from "react";
-import polymarketMark from "../../../../assets/polymarket.jpg";
+import { useBrandLogo } from "../../../theme/useBrandLogo.js";
 import { ConfirmDialog } from "../components/ConfirmDialog.jsx";
 import { NewPortfolioDialog } from "../components/NewPortfolioDialog.jsx";
 import { PortfolioCard } from "../components/PortfolioCard.jsx";
@@ -15,6 +15,7 @@ function sum(values) {
 export function ProfilePage() {
   const { user, token } = useAuth();
   const isAdmin = Boolean(user?.is_admin);
+  const brandLogo = useBrandLogo();
   const { items, loading, err, creating, create, remove, refresh } = useProfileData(
     token,
     user?.id,
@@ -57,7 +58,7 @@ export function ProfilePage() {
             </div>
           </div>
           <div className="prof-brand">
-            <img className="auth-brand-logo" src={polymarketMark} alt="" />
+            <img className="auth-brand-logo" src={brandLogo} alt="" />
           </div>
         </header>
 

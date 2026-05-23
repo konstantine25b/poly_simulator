@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import polymarketMark from "../../../../assets/polymarket.jpg";
+import { useBrandLogo } from "../../../theme/useBrandLogo.js";
 import { AuthForm } from "../components/AuthForm.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import "../auth.css";
 
 export function LoginPage() {
   const { login, isAuthenticated } = useAuth();
+  const brandLogo = useBrandLogo();
   const navigate = useNavigate();
   const location = useLocation();
   const redirectTo = location.state?.from || "/";
@@ -28,7 +29,7 @@ export function LoginPage() {
           <span aria-hidden>←</span> Back to markets
         </Link>
         <div className="auth-brand">
-          <img className="auth-brand-logo" src={polymarketMark} alt="" />
+          <img className="auth-brand-logo" src={brandLogo} alt="" />
           <span className="auth-brand-name">PolyPTrade</span>
         </div>
         <h1 className="auth-title">Welcome back</h1>

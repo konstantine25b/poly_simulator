@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import polymarketMarkDark from "../../assets/polymarket.jpg";
-import polymarketMarkLight from "../../assets/polymarket-white.jpg";
 import { useAuth } from "../features/auth/context/AuthContext.jsx";
 import { POLYPTRADE_X_URL } from "../social.js";
-import { useTheme } from "../theme/ThemeContext.jsx";
 import { ThemeToggle } from "../theme/ThemeToggle.jsx";
+import { useBrandLogo } from "../theme/useBrandLogo.js";
 import "./navbar.css";
 
 function initialFor(email) {
@@ -17,10 +15,9 @@ const MOBILE_NAV_MQ = "(max-width: 768px)";
 
 export function Navbar() {
   const { isAuthenticated, user, logout, booting } = useAuth();
-  const { theme } = useTheme();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const brandLogo = theme === "light" ? polymarketMarkLight : polymarketMarkDark;
+  const brandLogo = useBrandLogo();
 
   useEffect(() => {
     setMenuOpen(false);

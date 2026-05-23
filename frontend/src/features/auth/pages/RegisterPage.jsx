@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import polymarketMark from "../../../../assets/polymarket.jpg";
+import { useBrandLogo } from "../../../theme/useBrandLogo.js";
 import { AuthForm } from "../components/AuthForm.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import "../auth.css";
@@ -8,6 +8,7 @@ import "../auth.css";
 export function RegisterPage() {
   const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const brandLogo = useBrandLogo();
 
   useEffect(() => {
     if (isAuthenticated) navigate("/", { replace: true });
@@ -26,7 +27,7 @@ export function RegisterPage() {
           <span aria-hidden>←</span> Back to markets
         </Link>
         <div className="auth-brand">
-          <img className="auth-brand-logo" src={polymarketMark} alt="" />
+          <img className="auth-brand-logo" src={brandLogo} alt="" />
           <span className="auth-brand-name">PolyPTrade</span>
         </div>
         <h1 className="auth-title">Create your account</h1>

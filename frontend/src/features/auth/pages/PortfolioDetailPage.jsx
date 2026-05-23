@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import polymarketMark from "../../../../assets/polymarket.jpg";
 import { apiBase } from "../../../config.js";
+import { useBrandLogo } from "../../../theme/useBrandLogo.js";
 import { LiveMarketQuoteSub } from "../../markets/query/LiveMarketQuoteSub.jsx";
 import { PortfolioSummaryGrid } from "../components/PortfolioSummaryGrid.jsx";
 import { PositionList } from "../components/PositionList.jsx";
@@ -51,6 +51,7 @@ function liveAggregateStatus(liveByMarket, marketRefs) {
 export function PortfolioDetailPage() {
   const { portfolioId } = useParams();
   const { user, token } = useAuth();
+  const brandLogo = useBrandLogo();
   const { data, loading, err, refresh } = usePortfolioDetail(token, portfolioId);
 
   const [sellTargetId, setSellTargetId] = useState(null);
@@ -196,7 +197,7 @@ export function PortfolioDetailPage() {
             </div>
           </div>
           <div className="prof-brand">
-            <img className="auth-brand-logo" src={polymarketMark} alt="" />
+            <img className="auth-brand-logo" src={brandLogo} alt="" />
           </div>
         </header>
 

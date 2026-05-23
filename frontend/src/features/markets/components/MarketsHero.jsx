@@ -1,11 +1,12 @@
-import polymarketMark from "../../../../assets/polymarket.jpg";
+import { useBrandLogo } from "../../../theme/useBrandLogo.js";
 
 export function MarketsHero() {
+  const brandLogo = useBrandLogo();
   return (
     <header className="mkt-hero">
       <div className="mkt-hero-card">
         <div className="mkt-hero-brand">
-          <img className="mkt-hero-logo" src={polymarketMark} alt="" width={44} height={44} />
+          <img className="mkt-hero-logo" src={brandLogo} alt="" width={44} height={44} />
           <div className="mkt-hero-copy">
             <h1 className="mkt-hero-title">Trade Polymarkets</h1>
             <p className="mkt-hero-sub">
