@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import polymarketMark from "../../assets/polymarket.jpg";
+import polymarketMarkDark from "../../assets/polymarket.jpg";
+import polymarketMarkLight from "../../assets/polymarket-white.jpg";
 import { useAuth } from "../features/auth/context/AuthContext.jsx";
 import { POLYPTRADE_X_URL } from "../social.js";
+import { useTheme } from "../theme/ThemeContext.jsx";
 import { ThemeToggle } from "../theme/ThemeToggle.jsx";
 import "./navbar.css";
 
@@ -15,8 +17,10 @@ const MOBILE_NAV_MQ = "(max-width: 768px)";
 
 export function Navbar() {
   const { isAuthenticated, user, logout, booting } = useAuth();
+  const { theme } = useTheme();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const brandLogo = theme === "light" ? polymarketMarkLight : polymarketMarkDark;
 
   useEffect(() => {
     setMenuOpen(false);
@@ -47,8 +51,13 @@ export function Navbar() {
   return (
     <header className={`nav-shell${menuOpen ? " nav-menu-open" : ""}`}>
       <nav className="nav-bar" aria-label="Primary">
-        <Link to="/" className="nav-brand">
-          <img className="nav-brand-logo" src={polymarketMark} alt="" />
+        <Link
+          to="/"
+          className="nav-brand"
+          aria-label="PolyPTrade home"
+          title="PolyPTrade — Paper trading"
+        >
+          <img className="nav-brand-logo" src={brandLogo} alt="PolyPTrade" />
           <span className="nav-brand-text">
             <span className="nav-brand-name">PolyPTrade</span>
             <span className="nav-brand-tag">Paper trading</span>
