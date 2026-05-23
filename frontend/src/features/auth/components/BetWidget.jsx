@@ -99,6 +99,22 @@ export function BetWidget({ marketId, quotes, disabled }) {
     );
   }
 
+  const hasTradableQuote = (quotes || []).some((q) =>
+    Number.isFinite(Number(q?.best_ask)),
+  );
+
+  if (!hasTradableQuote) {
+    return (
+      <section className="md-panel bw-panel">
+        <h2 className="md-panel-title md-panel-title-inline">Place a bet</h2>
+        <p className="bw-locked">
+          Live order book is unavailable for this market — new bets can&apos;t be
+          placed right now.
+        </p>
+      </section>
+    );
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!canSubmit) return;

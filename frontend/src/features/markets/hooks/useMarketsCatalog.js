@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiBase } from "../../../config.js";
 import { usePhoneLayout } from "../../../hooks/usePhoneLayout.js";
 import { buildMarketsQuery } from "../query/buildMarketsQuery.js";
@@ -11,27 +11,49 @@ import {
   setCachedPage,
 } from "../query/marketsCache.js";
 
+const STATE_KEY = "polyptrade.marketsCatalog.v1";
+
+function readPersisted() {
+  try {
+    const raw = sessionStorage.getItem(STATE_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw);
+    return v && typeof v === "object" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePersisted(state) {
+  try {
+    sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
 export function useMarketsCatalog() {
   const isPhone = usePhoneLayout();
-  const [filter, setFilter] = useState("all");
-  const [sort, setSort] = useState("created_desc");
-  const [acceptingOrdersOnly, setAcceptingOrdersOnly] = useState(false);
-  const [minVolumeInput, setMinVolumeInput] = useState("");
-  const [minVolume, setMinVolume] = useState(null);
-  const [startDateFrom, setStartDateFrom] = useState("");
-  const [startDateTo, setStartDateTo] = useState("");
-  const [endDateFrom, setEndDateFrom] = useState("");
-  const [endDateTo, setEndDateTo] = useState("");
-  const [qInput, setQInput] = useState("");
-  const [q, setQ] = useState("");
-  const [gammaInput, setGammaInput] = useState("");
-  const [gammaQuery, setGammaQuery] = useState("");
+  const persisted = useRef(readPersisted()).current || {};
+  const [filter, setFilter] = useState(persisted.filter ?? "all");
+  const [sort, setSort] = useState(persisted.sort ?? "created_desc");
+  const [acceptingOrdersOnly, setAcceptingOrdersOnly] = useState(
+    persisted.acceptingOrdersOnly ?? false,
+  );
+  const [minVolumeInput, setMinVolumeInput] = useState(persisted.minVolumeInput ?? "");
+  const [minVolume, setMinVolume] = useState(persisted.minVolume ?? null);
+  const [startDateFrom, setStartDateFrom] = useState(persisted.startDateFrom ?? "");
+  const [startDateTo, setStartDateTo] = useState(persisted.startDateTo ?? "");
+  const [endDateFrom, setEndDateFrom] = useState(persisted.endDateFrom ?? "");
+  const [endDateTo, setEndDateTo] = useState(persisted.endDateTo ?? "");
+  const [qInput, setQInput] = useState(persisted.qInput ?? "");
+  const [q, setQ] = useState(persisted.q ?? "");
+  const [gammaInput, setGammaInput] = useState(persisted.gammaInput ?? "");
+  const [gammaQuery, setGammaQuery] = useState(persisted.gammaQuery ?? "");
   const [gammaMarket, setGammaMarket] = useState(null);
   const [gammaLoading, setGammaLoading] = useState(false);
   const [gammaErr, setGammaErr] = useState(null);
-  const [pageSizeDesktop, setPageSizeDesktop] = useState(50);
+  const [pageSizeDesktop, setPageSizeDesktop] = useState(persisted.pageSizeDesktop ?? 50);
   const pageSize = isPhone ? 10 : pageSizeDesktop;
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(persisted.page ?? 0);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasFreshData, setHasFreshData] = useState(false);
@@ -99,7 +121,12 @@ export function useMarketsCatalog() {
     };
   }, [gammaQuery]);
 
+  const skipResetRef = useRef(true);
   useEffect(() => {
+    if (skipResetRef.current) {
+      skipResetRef.current = false;
+      return;
+    }
     setPage(0);
   }, [
     filter,
@@ -172,6 +199,42 @@ export function useMarketsCatalog() {
     startDateTo,
     endDateFrom,
     endDateTo,
+  ]);
+
+  useEffect(() => {
+    writePersisted({
+      filter,
+      sort,
+      acceptingOrdersOnly,
+      minVolumeInput,
+      minVolume,
+      startDateFrom,
+      startDateTo,
+      endDateFrom,
+      endDateTo,
+      qInput,
+      q,
+      gammaInput,
+      gammaQuery,
+      pageSizeDesktop,
+      page,
+    });
+  }, [
+    filter,
+    sort,
+    acceptingOrdersOnly,
+    minVolumeInput,
+    minVolume,
+    startDateFrom,
+    startDateTo,
+    endDateFrom,
+    endDateTo,
+    qInput,
+    q,
+    gammaInput,
+    gammaQuery,
+    pageSizeDesktop,
+    page,
   ]);
 
   const showSkeletons = loading && !hasFreshData;

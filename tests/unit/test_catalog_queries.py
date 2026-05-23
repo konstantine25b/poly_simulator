@@ -126,6 +126,7 @@ class TestListMarketsFromDb:
                     "volumeNum": 5000.0,
                     "createdAt": "2020-01-01T00:00:00Z",
                     "outcomes": '["Y"]',
+                    "lastTradePrice": 0.5,
                 },
                 {
                     "id": "m_no_orders",

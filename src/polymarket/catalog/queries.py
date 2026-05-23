@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from typing import Any
 
 from polymarket.api.markets import fetch_market
@@ -137,6 +138,14 @@ def list_markets_from_db(
         ao = _sql_col("acceptingOrders", "acceptingorders")
         conds.append(f"{ao} = {ph}")
         params.append(1)
+        ed_col = _sql_col("endDate", "enddate")
+        now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        conds.append(
+            f"({ed_col} IS NULL OR TRIM({ed_col}) = '' OR {ed_col} > {ph})"
+        )
+        params.append(now_iso)
+        ltp = _sql_col("lastTradePrice", "lasttradeprice")
+        conds.append(f"{ltp} IS NOT NULL")
     if min_volume is not None and min_volume > 0:
         vn = _sql_col("volumeNum", "volumenum")
         conds.append(f"({vn} IS NOT NULL AND {vn} >= {ph})")
