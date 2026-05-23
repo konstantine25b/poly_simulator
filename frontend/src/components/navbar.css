@@ -13,6 +13,14 @@
   background: #ffffff;
 }
 
+[data-theme="light"] .nav-btn-ghost:hover {
+  color: var(--text-title);
+}
+
+[data-theme="light"] .nav-link-active {
+  color: var(--text-title);
+}
+
 .nav-bar {
   max-width: 1180px;
   margin: 0 auto;

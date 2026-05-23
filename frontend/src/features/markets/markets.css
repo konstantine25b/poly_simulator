@@ -1011,3 +1011,20 @@
   height: 28px;
   border-radius: 8px;
 }
+
+[data-theme="light"] .mkt-filter:hover {
+  color: var(--text-title);
+}
+
+[data-theme="light"] .mkt-filter.on {
+  color: var(--text-title);
+}
+
+[data-theme="light"] .mkt-pager-cell--edge:hover:not(:disabled),
+[data-theme="light"] .mkt-pager-cell--num:hover {
+  color: var(--text-title);
+}
+
+[data-theme="light"] .mkt-pager-cell--on {
+  color: var(--text-title);
+}
