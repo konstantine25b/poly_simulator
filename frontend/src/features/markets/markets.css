@@ -924,3 +924,90 @@
     min-height: 40px;
   }
 }
+
+@keyframes mkt-skeleton-shimmer {
+  0% {
+    background-position: -240px 0;
+  }
+  100% {
+    background-position: 240px 0;
+  }
+}
+
+.mkt-list-refreshing {
+  opacity: 0.55;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+
+.mkt-card-skeleton {
+  cursor: default;
+  border-color: var(--border-75);
+  background: linear-gradient(180deg, var(--hero-65) 0%, var(--panel-92) 100%);
+}
+
+.sk {
+  display: block;
+  border-radius: 6px;
+  background-color: var(--border-75);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 240px 100%;
+  background-repeat: no-repeat;
+  animation: mkt-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.sk-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex: 0 0 36px;
+}
+
+.sk-line {
+  height: 12px;
+  width: 100%;
+}
+
+.sk-line-title {
+  height: 14px;
+  margin-bottom: 0.4rem;
+}
+
+.sk-line-short {
+  width: 55%;
+  margin-bottom: 0;
+}
+
+.sk-meta-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.sk-pill {
+  height: 18px;
+  width: 60px;
+  border-radius: 999px;
+}
+
+.sk-pill-wide {
+  width: 90px;
+}
+
+.sk-outcomes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.sk-outcome {
+  height: 28px;
+  border-radius: 8px;
+}

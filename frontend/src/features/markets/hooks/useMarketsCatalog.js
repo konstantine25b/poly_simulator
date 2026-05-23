@@ -34,6 +34,7 @@ export function useMarketsCatalog() {
   const [page, setPage] = useState(0);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasFreshData, setHasFreshData] = useState(false);
   const [err, setErr] = useState(null);
 
   useEffect(() => {
@@ -137,16 +138,19 @@ export function useMarketsCatalog() {
       setData(cached.data);
       setErr(null);
       setLoading(false);
+      setHasFreshData(true);
       if (cached.fresh) return;
     } else {
       setLoading(true);
       setErr(null);
+      setHasFreshData(false);
     }
     fetchMarketsPage(apiBase, qs)
       .then((json) => {
         if (cancelled) return;
         setData(json);
         setErr(null);
+        setHasFreshData(true);
         setCachedPage(qs, json);
       })
       .catch((e) => {
@@ -174,8 +178,9 @@ export function useMarketsCatalog() {
     endDateTo,
   ]);
 
+  const showSkeletons = loading && !hasFreshData;
   const total = data?.total ?? 0;
-  const items = data?.items ?? [];
+  const items = showSkeletons ? [] : (data?.items ?? []);
   const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
   const pageInfo = useMemo(() => {
     const from = total === 0 ? 0 : page * pageSize + 1;
@@ -212,6 +217,7 @@ export function useMarketsCatalog() {
     page,
     setPage,
     loading,
+    showSkeletons,
     err,
     items,
     total,

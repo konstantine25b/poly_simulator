@@ -1,5 +1,6 @@
 import "./markets.css";
 import { MarketCard } from "./components/MarketCard.jsx";
+import { MarketsSkeletonList } from "./components/MarketCardSkeleton.jsx";
 import { MarketsHero } from "./components/MarketsHero.jsx";
 import { MarketsPager } from "./components/MarketsPager.jsx";
 import { MarketsToolbar } from "./components/MarketsToolbar.jsx";
@@ -36,12 +37,15 @@ export function MarketsPage() {
     page,
     setPage,
     loading,
+    showSkeletons,
     err,
     items,
     total,
     totalPages,
     pageInfo,
   } = useMarketsCatalog();
+
+  const skeletonCount = Math.min(Math.max(pageSize, 3), 12);
 
   return (
     <div className="mkt-app">
@@ -83,14 +87,21 @@ export function MarketsPage() {
             ) : null}
           </section>
         ) : null}
-        {loading ? <div className="mkt-state">Loading markets…</div> : null}
         {err ? <div className="mkt-state mkt-err">{err}</div> : null}
-        {!loading && !err && items.length === 0 ? <div className="mkt-state">No markets match.</div> : null}
-        <div className="mkt-list">
-          {items.map((m) => (
-            <MarketCard key={field(m, "id") || field(m, "slug")} market={m} />
-          ))}
-        </div>
+        {showSkeletons ? (
+          <MarketsSkeletonList count={skeletonCount} />
+        ) : (
+          <>
+            {!loading && !err && items.length === 0 ? (
+              <div className="mkt-state">No markets match.</div>
+            ) : null}
+            <div className={`mkt-list${loading ? " mkt-list-refreshing" : ""}`}>
+              {items.map((m) => (
+                <MarketCard key={field(m, "id") || field(m, "slug")} market={m} />
+              ))}
+            </div>
+          </>
+        )}
       </main>
       <MarketsPager
         total={total}
