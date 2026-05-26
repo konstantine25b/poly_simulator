@@ -11,6 +11,10 @@ def normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
+def normalize_username(username: str) -> str:
+    return username.strip()
+
+
 def insert_user(
     conn: Connection,
     *,
@@ -42,7 +46,11 @@ def insert_user(
 
 def fetch_user_by_email(conn: Connection, email: str) -> dict[str, Any] | None:
     ph = placeholder()
-    rows = fetchall(conn, f"SELECT id, email, password_hash, is_admin, created_at FROM users WHERE email = {ph}", (email,))
+    rows = fetchall(
+        conn,
+        f"SELECT id, email, username, password_hash, is_admin, created_at FROM users WHERE email = {ph}",
+        (email,),
+    )
     if not rows:
         return None
     r = rows[0]
@@ -53,7 +61,11 @@ def fetch_user_by_email(conn: Connection, email: str) -> dict[str, Any] | None:
 
 def fetch_user_by_id(conn: Connection, user_id: int) -> dict[str, Any] | None:
     ph = placeholder()
-    rows = fetchall(conn, f"SELECT id, email, password_hash, is_admin, created_at FROM users WHERE id = {ph}", (user_id,))
+    rows = fetchall(
+        conn,
+        f"SELECT id, email, username, password_hash, is_admin, created_at FROM users WHERE id = {ph}",
+        (user_id,),
+    )
     if not rows:
         return None
     r = rows[0]
@@ -63,7 +75,7 @@ def fetch_user_by_id(conn: Connection, user_id: int) -> dict[str, Any] | None:
 
 
 def list_users_public(conn: Connection) -> list[dict[str, Any]]:
-    rows = fetchall(conn, "SELECT id, email, is_admin, created_at FROM users ORDER BY id")
+    rows = fetchall(conn, "SELECT id, email, username, is_admin, created_at FROM users ORDER BY id")
     out: list[dict[str, Any]] = []
     for r in rows:
         if isinstance(r, dict):
@@ -78,9 +90,29 @@ def list_users_public(conn: Connection) -> list[dict[str, Any]]:
     return out
 
 
+def fetch_user_by_username(conn: Connection, username: str) -> dict[str, Any] | None:
+    ph = placeholder()
+    rows = fetchall(
+        conn,
+        f"SELECT id, email, username, password_hash, is_admin, created_at FROM users WHERE LOWER(username) = LOWER({ph})",
+        (username,),
+    )
+    if not rows:
+        return None
+    r = rows[0]
+    if isinstance(r, dict):
+        return dict(r)
+    return {k: r[k] for k in r.keys()}
+
+
 def update_user_password(conn: Connection, user_id: int, password_hash: str) -> None:
     ph = placeholder()
     execute(conn, f"UPDATE users SET password_hash = {ph} WHERE id = {ph}", (password_hash, user_id))
+
+
+def update_user_username(conn: Connection, user_id: int, username: str | None) -> None:
+    ph = placeholder()
+    execute(conn, f"UPDATE users SET username = {ph} WHERE id = {ph}", (username, user_id))
 
 
 def update_user_admin(conn: Connection, user_id: int, is_admin: bool) -> None:

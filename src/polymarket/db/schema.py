@@ -234,6 +234,7 @@ def create_tables(conn: Connection) -> None:
             conn.execute(ddl)
         _migrate_sqlite(conn)
     _migrate_users_portfolios_user_id(conn)
+    _migrate_users_username(conn)
     _migrate_legacy_portfolio_table(conn)
     _seed_portfolio(conn)
     _sync_bootstrap_admin_from_env(conn)
@@ -309,6 +310,29 @@ def _migrate_portfolio_id_columns_sqlite(conn: sqlite3.Connection) -> None:
         if cols and "portfolio_id" not in cols:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN portfolio_id INTEGER")
             conn.execute(f"UPDATE {table} SET portfolio_id = 1 WHERE portfolio_id IS NULL")
+
+
+def _migrate_users_username(conn: Connection) -> None:
+    if settings.db_backend == "postgres":
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'username'
+            """
+        )
+        if cur.fetchone() is None:
+            cur.execute("ALTER TABLE users ADD COLUMN username TEXT UNIQUE")
+        cur.close()
+        return
+
+    cols = {row[1] for row in conn.execute("PRAGMA table_info('users')").fetchall()}
+    if "username" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN username TEXT")
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) "
+            "WHERE username IS NOT NULL"
+        )
 
 
 def _migrate_users_portfolios_user_id(conn: Connection) -> None:

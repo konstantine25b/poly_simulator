@@ -59,6 +59,16 @@ class LoginBody(BaseModel):
     password: str
 
 
+class ProfileUpdateBody(BaseModel):
+    username: str | None = None
+
+
+class ResetPasswordBody(BaseModel):
+    email: str
+    current_password: str
+    new_password: str = Field(min_length=8)
+
+
 class AdminUserCreateBody(BaseModel):
     email: str
     password: str = Field(min_length=8)
@@ -75,4 +85,13 @@ def email_ok(email: str) -> bool:
     left, _, right = email.partition("@")
     if not left or not right or "." not in right:
         return False
+    return True
+
+
+def username_ok(username: str) -> bool:
+    if len(username) < 3 or len(username) > 24:
+        return False
+    for ch in username:
+        if not (ch.isalnum() or ch == "_"):
+            return False
     return True
