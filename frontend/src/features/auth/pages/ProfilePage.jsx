@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useBrandLogo } from "../../../theme/useBrandLogo.js";
 import { ConfirmDialog } from "../components/ConfirmDialog.jsx";
 import { NewPortfolioDialog } from "../components/NewPortfolioDialog.jsx";
 import { PortfolioCard } from "../components/PortfolioCard.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { formatUsd, initialFor } from "../format.js";
+import { formatUsd } from "../format.js";
+import { displayInitial, displayName } from "../userDisplay.js";
 import { useProfileData } from "../hooks/useProfileData.js";
 import "../auth.css";
 
@@ -38,6 +40,9 @@ export function ProfilePage() {
       <div className="prof-container">
         <nav className="prof-nav prof-nav-end">
           <div className="prof-nav-actions">
+            <Link to="/settings" className="auth-btn auth-btn-ghost">
+              Settings
+            </Link>
             <button type="button" className="auth-btn auth-btn-ghost" onClick={refresh}>
               Refresh
             </button>
@@ -46,10 +51,13 @@ export function ProfilePage() {
 
         <header className="prof-header">
           <div className="prof-header-main">
-            <div className="prof-avatar-lg">{initialFor(user?.email)}</div>
+            <div className="prof-avatar-lg">{displayInitial(user)}</div>
             <div className="prof-header-copy">
               <div className="auth-brand-name">Your profile</div>
-              <h1 className="prof-title">{user?.email || "—"}</h1>
+              <h1 className="prof-title">{displayName(user) || "—"}</h1>
+              {user?.username && user?.email ? (
+                <p className="prof-email-sub">{user.email}</p>
+              ) : null}
               <div className="prof-chips">
                 <span className={`prof-chip ${user?.is_admin ? "prof-chip-admin" : ""}`}>
                   {user?.is_admin ? "Admin" : "Member"}
@@ -147,8 +155,8 @@ export function ProfilePage() {
         message={
           deleteTarget
             ? `This permanently removes the portfolio, all its positions, and trade history${
-                deleteTarget.owner_email && Number(deleteTarget.user_id) !== Number(user?.id)
-                  ? ` belonging to ${deleteTarget.owner_email}`
+                deleteTarget.owner_label && Number(deleteTarget.user_id) !== Number(user?.id)
+                  ? ` belonging to ${deleteTarget.owner_label}`
                   : ""
               }. This cannot be undone.`
             : ""

@@ -1,16 +1,11 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "../../../theme/ThemeToggle.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { displayInitial, displayName } from "../userDisplay.js";
 import "../auth.css";
 
-function initialFor(email) {
-  if (!email) return "?";
-  const trimmed = email.trim();
-  return trimmed.charAt(0).toUpperCase() || "?";
-}
-
 export function AuthTopBar() {
-  const { isAuthenticated, user, logout, booting } = useAuth();
+  const { isAuthenticated, user, booting } = useAuth();
 
   if (booting) return <div className="auth-topbar" aria-hidden />;
 
@@ -19,13 +14,13 @@ export function AuthTopBar() {
       <ThemeToggle className="auth-topbar-theme" />
       {isAuthenticated ? (
         <>
-          <Link to="/profile" className="auth-topbar-user" title="View profile">
-            <span className="auth-topbar-avatar">{initialFor(user?.email)}</span>
-            <span className="auth-topbar-email">{user?.email}</span>
+          <Link to="/profile" className="auth-topbar-user" title={user?.email || "View profile"}>
+            <span className="auth-topbar-avatar">{displayInitial(user)}</span>
+            <span className="auth-topbar-display">{displayName(user)}</span>
           </Link>
-          <button type="button" className="auth-btn auth-btn-ghost" onClick={logout}>
-            Log out
-          </button>
+          <Link to="/settings" className="auth-btn auth-btn-ghost">
+            Settings
+          </Link>
         </>
       ) : (
         <>

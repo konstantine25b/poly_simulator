@@ -22,14 +22,14 @@ export function PortfolioCard({ portfolio, onDelete }) {
               Created {formatDateShort(portfolio.created_at)} · ID{" "}
               {portfolio.id}
             </div>
-            {portfolio.owner_email || portfolio.user_id != null ? (
+            {portfolio.owner_label || portfolio.user_id != null ? (
               <div
                 className="prof-port-owner"
                 title={portfolio.owner_email || ""}
               >
                 <span className="prof-port-owner-lbl">Owner</span>
                 <span className="prof-port-owner-val">
-                  {portfolio.owner_email || `user #${portfolio.user_id}`}
+                  {portfolio.owner_label || `user #${portfolio.user_id}`}
                 </span>
               </div>
             ) : null}

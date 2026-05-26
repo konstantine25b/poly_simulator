@@ -1,20 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../features/auth/context/AuthContext.jsx";
+import { displayInitial, displayName } from "../features/auth/userDisplay.js";
 import { POLYPTRADE_X_URL } from "../social.js";
 import { ThemeToggle } from "../theme/ThemeToggle.jsx";
 import { useBrandLogo } from "../theme/useBrandLogo.js";
 import "./navbar.css";
 
-function initialFor(email) {
-  if (!email) return "?";
-  return email.trim().charAt(0).toUpperCase() || "?";
-}
-
 const MOBILE_NAV_MQ = "(max-width: 768px)";
 
 export function Navbar() {
-  const { isAuthenticated, user, logout, booting } = useAuth();
+  const { isAuthenticated, user, booting } = useAuth();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const brandLogo = useBrandLogo();
@@ -95,22 +91,32 @@ export function Navbar() {
                 <Link
                   to="/profile"
                   className="nav-user"
-                  title="View profile"
+                  title={user?.email || "View profile"}
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span className="nav-avatar">{initialFor(user?.email)}</span>
-                  <span className="nav-email">{user?.email}</span>
+                  <span className="nav-avatar">{displayInitial(user)}</span>
+                  <span className="nav-display">{displayName(user)}</span>
                 </Link>
-                <button
-                  type="button"
-                  className="nav-btn nav-btn-ghost"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    logout();
-                  }}
+                <NavLink
+                  to="/settings"
+                  className={({ isActive }) =>
+                    `nav-settings${isActive ? " nav-settings-active" : ""}`
+                  }
+                  aria-label="Settings"
+                  title="Settings"
+                  onClick={() => setMenuOpen(false)}
                 >
-                  Log out
-                </button>
+                  <svg
+                    className="nav-settings-icon"
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    aria-hidden
+                  >
+                    <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z" />
+                  </svg>
+                </NavLink>
               </>
             ) : (
               <>

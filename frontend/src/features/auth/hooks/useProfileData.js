@@ -43,6 +43,7 @@ async function loadPortfoliosWithSummaries(token, userId, isAdmin) {
       ...p,
       summary: summaries[i],
       owner_email: owner?.email ?? null,
+      owner_label: owner ? (owner.username || owner.email) : null,
     };
   });
 }

@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../features/auth/context/AuthContext.jsx";
-import { POLYPTRADE_X_URL } from "../social.js";
 import "./mobileBottomNav.css";
 
 export function MobileBottomNav() {
@@ -56,19 +55,17 @@ export function MobileBottomNav() {
           <span className="mob-nav-label mob-nav-skel mob-nav-skel-text" />
         </span>
       ) : isAuthenticated ? (
-        <a
-          className="mob-nav-item"
-          href={POLYPTRADE_X_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+        <NavLink
+          to="/settings"
+          className={({ isActive }) => `mob-nav-item${isActive ? " mob-nav-item-active" : ""}`}
         >
           <span className="mob-nav-icon" aria-hidden>
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z" />
             </svg>
           </span>
-          <span className="mob-nav-label">Community</span>
-        </a>
+          <span className="mob-nav-label">Settings</span>
+        </NavLink>
       ) : (
         <NavLink
           to="/register"

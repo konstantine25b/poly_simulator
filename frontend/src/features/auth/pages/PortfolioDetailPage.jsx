@@ -10,6 +10,7 @@ import { SettlePositionDialog } from "../components/SettlePositionDialog.jsx";
 import { TradeList } from "../components/TradeList.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { formatUsd, initialFor } from "../format.js";
+import { displayName } from "../userDisplay.js";
 import { usePortfolioDetail } from "../hooks/usePortfolioDetail.js";
 import {
   computeStartingBalance,
@@ -188,9 +189,9 @@ export function PortfolioDetailPage() {
                     Cash {formatUsd(summary.balance)}
                   </span>
                 ) : null}
-                {user?.email ? (
-                  <span className="prof-chip" title={user.email}>
-                    {user.email}
+                {user ? (
+                  <span className="prof-chip" title={user.email || ""}>
+                    {displayName(user)}
                   </span>
                 ) : null}
               </div>

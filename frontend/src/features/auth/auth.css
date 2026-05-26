@@ -33,7 +33,7 @@
   flex-shrink: 0;
 }
 
-.auth-topbar-email {
+.auth-topbar-display {
   max-width: 14rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -382,6 +382,13 @@
   font-size: clamp(1.25rem, 3vw, 1.7rem);
   color: var(--text-title);
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.prof-email-sub {
+  margin: -0.25rem 0 0.5rem;
+  font-size: 0.84rem;
+  color: var(--muted);
   overflow-wrap: anywhere;
 }
 

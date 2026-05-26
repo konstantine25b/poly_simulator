@@ -33,12 +33,33 @@ function extractErrorMessage(data, status) {
   return `Request failed (${status})`;
 }
 
-async function postJson(path, body) {
+async function postJson(path, body, token) {
   let res;
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
   try {
     res = await fetch(`${apiBase}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    throw new Error(`Network error: ${e.message || "could not reach server"}`);
+  }
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(extractErrorMessage(data, res.status));
+  return data;
+}
+
+async function patchJson(path, body, token) {
+  let res;
+  try {
+    res = await fetch(`${apiBase}${path}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(body),
     });
   } catch (e) {
@@ -64,4 +85,16 @@ export async function fetchMe(token) {
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new Error(extractErrorMessage(data, res.status));
   return data;
+}
+
+export function updateProfile(token, username) {
+  return patchJson("/auth/profile", { username }, token);
+}
+
+export function resetPassword(token, email, currentPassword, newPassword) {
+  return postJson(
+    "/auth/reset-password",
+    { email, current_password: currentPassword, new_password: newPassword },
+    token,
+  );
 }

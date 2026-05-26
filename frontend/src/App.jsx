@@ -9,6 +9,7 @@ import { LoginPage } from "./features/auth/pages/LoginPage.jsx";
 import { PortfolioDetailPage } from "./features/auth/pages/PortfolioDetailPage.jsx";
 import { ProfilePage } from "./features/auth/pages/ProfilePage.jsx";
 import { RegisterPage } from "./features/auth/pages/RegisterPage.jsx";
+import { SettingsPage } from "./features/auth/pages/SettingsPage.jsx";
 import { MarketsPage } from "./features/markets/MarketsPage.jsx";
 import { MarketDetailPage } from "./features/markets/pages/MarketDetailPage.jsx";
 
@@ -43,6 +44,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <ProfilePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <RequireAuth>
+                  <SettingsPage />
                 </RequireAuth>
               }
             />
