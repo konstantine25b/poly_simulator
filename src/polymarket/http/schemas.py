@@ -69,6 +69,10 @@ class ResetPasswordBody(BaseModel):
     new_password: str = Field(min_length=8)
 
 
+class DeleteAccountBody(BaseModel):
+    password: str
+
+
 class AdminUserCreateBody(BaseModel):
     email: str
     password: str = Field(min_length=8)

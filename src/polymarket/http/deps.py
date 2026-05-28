@@ -3,8 +3,9 @@ from __future__ import annotations
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from polymarket.auth import Access, parse_access_token
+from polymarket.auth import Access, fetch_user_by_id, is_user_deleted, parse_access_token
 from polymarket.config import settings
+from polymarket.db import get_connection
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -26,6 +27,15 @@ def _access_from_bearer(credentials: HTTPAuthorizationCredentials | None) -> Acc
         raise HTTPException(status_code=401, detail="invalid or expired token") from None
     uid = int(payload["sub"])
     adm = bool(int(payload.get("adm", 0)))
+    conn = get_connection()
+    try:
+        row = fetch_user_by_id(conn, uid)
+    finally:
+        conn.close()
+    if not row:
+        raise HTTPException(status_code=401, detail="user not found")
+    if is_user_deleted(row):
+        raise HTTPException(status_code=401, detail="account deleted")
     return Access(user_id=uid, is_admin=adm)
 
 

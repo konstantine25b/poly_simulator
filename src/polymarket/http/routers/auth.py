@@ -11,9 +11,11 @@ from polymarket.auth import (
     fetch_user_by_username,
     hash_password,
     insert_user,
+    is_user_deleted,
     issue_access_token,
     normalize_email,
     normalize_username,
+    soft_delete_user,
     update_user_password,
     update_user_username,
     verify_password,
@@ -22,6 +24,7 @@ from polymarket.config import settings
 from polymarket.db import get_connection
 from polymarket.http.deps import get_access
 from polymarket.http.schemas import (
+    DeleteAccountBody,
     LoginBody,
     ProfileUpdateBody,
     RegisterBody,
@@ -40,6 +43,8 @@ def user_public(row: dict[str, Any]) -> dict[str, Any]:
         "email": str(row["email"]),
         "username": str(un) if un else None,
         "is_admin": bool(int(row["is_admin"])),
+        "is_deleted": is_user_deleted(row),
+        "deleted_at": row.get("deleted_at"),
     }
 
 
@@ -85,6 +90,8 @@ def auth_login(body: LoginBody) -> dict[str, Any]:
         row = fetch_user_by_email(conn, email)
         if not row or not verify_password(body.password, str(row["password_hash"])):
             raise HTTPException(status_code=401, detail="invalid email or password")
+        if is_user_deleted(row):
+            raise HTTPException(status_code=403, detail="account deleted")
         uid = int(row["id"])
         ia = bool(int(row["is_admin"]))
     finally:
@@ -171,3 +178,29 @@ def auth_reset_password(
     finally:
         conn.close()
     return {"status": "ok"}
+
+
+@router.post("/auth/delete-account")
+def auth_delete_account(
+    body: DeleteAccountBody,
+    access: Access = Depends(get_access),
+) -> dict[str, Any]:
+    conn = get_connection()
+    try:
+        row = fetch_user_by_id(conn, access.user_id)
+        if not row:
+            raise HTTPException(status_code=401, detail="user not found")
+        if is_user_deleted(row):
+            raise HTTPException(status_code=400, detail="account already deleted")
+        if not verify_password(body.password, str(row["password_hash"])):
+            raise HTTPException(status_code=401, detail="password is incorrect")
+        if bool(int(row["is_admin"])):
+            raise HTTPException(
+                status_code=400,
+                detail="admin accounts cannot self-delete; ask another admin",
+            )
+        soft_delete_user(conn, access.user_id)
+        conn.commit()
+    finally:
+        conn.close()
+    return {"status": "ok", "deleted": True}

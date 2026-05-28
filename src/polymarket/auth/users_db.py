@@ -48,7 +48,7 @@ def fetch_user_by_email(conn: Connection, email: str) -> dict[str, Any] | None:
     ph = placeholder()
     rows = fetchall(
         conn,
-        f"SELECT id, email, username, password_hash, is_admin, created_at FROM users WHERE email = {ph}",
+        f"SELECT id, email, username, password_hash, is_admin, created_at, deleted_at FROM users WHERE email = {ph}",
         (email,),
     )
     if not rows:
@@ -63,7 +63,7 @@ def fetch_user_by_id(conn: Connection, user_id: int) -> dict[str, Any] | None:
     ph = placeholder()
     rows = fetchall(
         conn,
-        f"SELECT id, email, username, password_hash, is_admin, created_at FROM users WHERE id = {ph}",
+        f"SELECT id, email, username, password_hash, is_admin, created_at, deleted_at FROM users WHERE id = {ph}",
         (user_id,),
     )
     if not rows:
@@ -75,7 +75,10 @@ def fetch_user_by_id(conn: Connection, user_id: int) -> dict[str, Any] | None:
 
 
 def list_users_public(conn: Connection) -> list[dict[str, Any]]:
-    rows = fetchall(conn, "SELECT id, email, username, is_admin, created_at FROM users ORDER BY id")
+    rows = fetchall(
+        conn,
+        "SELECT id, email, username, is_admin, created_at, deleted_at FROM users ORDER BY id",
+    )
     out: list[dict[str, Any]] = []
     for r in rows:
         if isinstance(r, dict):
@@ -86,6 +89,7 @@ def list_users_public(conn: Connection) -> list[dict[str, Any]]:
             d["is_admin"] = True
         else:
             d["is_admin"] = False
+        d["is_deleted"] = d.get("deleted_at") is not None
         out.append(d)
     return out
 
@@ -94,7 +98,7 @@ def fetch_user_by_username(conn: Connection, username: str) -> dict[str, Any] | 
     ph = placeholder()
     rows = fetchall(
         conn,
-        f"SELECT id, email, username, password_hash, is_admin, created_at FROM users WHERE LOWER(username) = LOWER({ph})",
+        f"SELECT id, email, username, password_hash, is_admin, created_at, deleted_at FROM users WHERE LOWER(username) = LOWER({ph})",
         (username,),
     )
     if not rows:
@@ -103,6 +107,23 @@ def fetch_user_by_username(conn: Connection, username: str) -> dict[str, Any] | 
     if isinstance(r, dict):
         return dict(r)
     return {k: r[k] for k in r.keys()}
+
+
+def soft_delete_user(conn: Connection, user_id: int) -> None:
+    ph = placeholder()
+    now = datetime.now(timezone.utc).isoformat()
+    execute(conn, f"UPDATE users SET deleted_at = {ph} WHERE id = {ph}", (now, user_id))
+
+
+def restore_user(conn: Connection, user_id: int) -> None:
+    ph = placeholder()
+    execute(conn, f"UPDATE users SET deleted_at = NULL WHERE id = {ph}", (user_id,))
+
+
+def is_user_deleted(row: dict[str, Any] | None) -> bool:
+    if not row:
+        return False
+    return row.get("deleted_at") is not None
 
 
 def update_user_password(conn: Connection, user_id: int, password_hash: str) -> None:

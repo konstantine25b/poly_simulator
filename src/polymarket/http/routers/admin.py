@@ -11,8 +11,10 @@ from polymarket.auth import (
     fetch_user_by_id,
     hash_password,
     insert_user,
+    is_user_deleted,
     list_users_public,
     normalize_email,
+    restore_user,
     update_user_password,
 )
 from polymarket.db import get_connection
@@ -66,6 +68,22 @@ def admin_delete_user(user_id: int, access: Access = Depends(require_admin)) -> 
     finally:
         conn.close()
     return {"ok": True}
+
+
+@router.post("/admin/users/{user_id}/restore")
+def admin_restore_user(user_id: int, _access: Access = Depends(require_admin)) -> dict[str, Any]:
+    conn = get_connection()
+    try:
+        row = fetch_user_by_id(conn, user_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="user not found")
+        if not is_user_deleted(row):
+            raise HTTPException(status_code=400, detail="account is not deleted")
+        restore_user(conn, user_id)
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "restored": True, "user_id": user_id}
 
 
 @router.post("/admin/users/{user_id}/password")

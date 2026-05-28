@@ -235,6 +235,7 @@ def create_tables(conn: Connection) -> None:
         _migrate_sqlite(conn)
     _migrate_users_portfolios_user_id(conn)
     _migrate_users_username(conn)
+    _migrate_users_deleted_at(conn)
     _migrate_legacy_portfolio_table(conn)
     _seed_portfolio(conn)
     _sync_bootstrap_admin_from_env(conn)
@@ -333,6 +334,25 @@ def _migrate_users_username(conn: Connection) -> None:
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username) "
             "WHERE username IS NOT NULL"
         )
+
+
+def _migrate_users_deleted_at(conn: Connection) -> None:
+    if settings.db_backend == "postgres":
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'deleted_at'
+            """
+        )
+        if cur.fetchone() is None:
+            cur.execute("ALTER TABLE users ADD COLUMN deleted_at TEXT")
+        cur.close()
+        return
+
+    cols = {row[1] for row in conn.execute("PRAGMA table_info('users')").fetchall()}
+    if "deleted_at" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN deleted_at TEXT")
 
 
 def _migrate_users_portfolios_user_id(conn: Connection) -> None:
