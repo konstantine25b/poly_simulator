@@ -150,15 +150,26 @@ class TradingService:
             if access.is_admin:
                 rows = fetchall(
                     conn,
-                    "SELECT id, name, balance, created_at, user_id FROM portfolios ORDER BY id",
+                    "SELECT p.id, p.name, p.balance, p.created_at, p.user_id, "
+                    "u.deleted_at AS owner_deleted_at "
+                    "FROM portfolios p LEFT JOIN users u ON u.id = p.user_id "
+                    "ORDER BY p.id",
                 )
             else:
                 rows = fetchall(
                     conn,
-                    f"SELECT id, name, balance, created_at, user_id FROM portfolios WHERE user_id = {ph} ORDER BY id",
+                    "SELECT p.id, p.name, p.balance, p.created_at, p.user_id, "
+                    f"u.deleted_at AS owner_deleted_at "
+                    f"FROM portfolios p LEFT JOIN users u ON u.id = p.user_id "
+                    f"WHERE p.user_id = {ph} ORDER BY p.id",
                     (access.user_id,),
                 )
-            return [_as_dict(r) for r in rows]
+            out: list[dict[str, Any]] = []
+            for r in rows:
+                d = _as_dict(r)
+                d["owner_deleted"] = d.get("owner_deleted_at") is not None
+                out.append(d)
+            return out
         finally:
             conn.close()
 
@@ -231,13 +242,18 @@ class TradingService:
             pid = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
             rows = fetchall(
                 conn,
-                f"SELECT id, name, balance FROM portfolios WHERE id = {ph}",
+                "SELECT p.id, p.name, p.balance, p.user_id, "
+                f"u.deleted_at AS owner_deleted_at "
+                f"FROM portfolios p LEFT JOIN users u ON u.id = p.user_id "
+                f"WHERE p.id = {ph}",
                 (pid,),
             )
             if not rows:
                 raise ValueError("portfolio not found")
             balance = float(rows[0]["balance"])
             pname = str(rows[0]["name"])
+            owner_uid = rows[0]["user_id"]
+            owner_deleted = rows[0]["owner_deleted_at"] is not None
             positions = [_as_dict(p) for p in self._load_positions_rows_for(conn, pid)]
         finally:
             conn.close()
@@ -266,6 +282,8 @@ class TradingService:
             "unrealized_pnl": unrealized,
             "positions_market_value": market_value,
             "equity": equity,
+            "user_id": int(owner_uid) if owner_uid is not None else None,
+            "owner_deleted": owner_deleted,
         }
 
     def get_positions(self, portfolio: int | str | None = None) -> list[dict[str, Any]]:
