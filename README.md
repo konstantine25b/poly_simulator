@@ -16,6 +16,62 @@ One of the most well-known platforms of this type is **Polymarket**, where users
 
 Despite the widespread use of prediction markets for estimating the probability of events, people interested in this field often lack a safe environment to study market dynamics or test various trading strategies. Testing strategies on real markets carries financial risk, making it hard to run experiments and observe the impact of different decisions — especially for those who are just learning how prediction markets work or are trying to develop their own analytical approaches.
 
+---
+
+## Screenshots
+
+A short visual tour of the app (same screenshots used in the bachelor report).
+
+**1. Main page — all markets**
+
+![Main page with the markets catalog](docs/images/01-main-page.png)
+
+**2. Market search**
+
+![Searching markets by question or slug](docs/images/02-market-search.png)
+
+**3. Market detail**
+
+![A single market with live best bid / best ask](docs/images/03-market-detail.png)
+
+**4. Buy a position**
+
+![Buy dialog on a market detail page](docs/images/04-buy-position.png)
+
+**5. Portfolios**
+
+![Profile page listing the user's portfolios](docs/images/05-portfolios.png)
+
+**6. Positions**
+
+![Portfolio detail page with live positions and PnL](docs/images/06-positions.png)
+
+**7. Sell a position**
+
+![Sell / close dialog on an open position](docs/images/07-sell-position.png)
+
+**8. Login / Register**
+
+![Authentication pages](docs/images/08-login-register.png)
+
+**9. Light mode**
+
+![Light theme of the UI](docs/images/09-white-mode.png)
+
+**10. Reset password**
+
+![Password reset flow](docs/images/10-reset-password.png)
+
+**11. Mobile mode**
+
+![Responsive mobile layout](docs/images/11-mobile-mode.png)
+
+**12. Market filters**
+
+![Status, volume, and date filters on the catalog page](docs/images/12-market-filters.png)
+
+---
+
 ## Setup
 
 **1. Create and activate a virtual environment**
