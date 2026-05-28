@@ -8,13 +8,20 @@ function handleDeleteClick(e, onDelete, portfolio) {
   if (onDelete) onDelete(portfolio);
 }
 
-export function PortfolioCard({ portfolio, onDelete }) {
+function handleRestoreClick(e, onRestore, portfolio) {
+  e.preventDefault();
+  e.stopPropagation();
+  if (onRestore) onRestore(portfolio);
+}
+
+export function PortfolioCard({ portfolio, onDelete, onRestore }) {
   const s = portfolio.summary;
   const detailHref = `/portfolios/${encodeURIComponent(portfolio.id)}`;
+  const ownerDeleted = Boolean(portfolio.owner_deleted);
 
   return (
     <Link to={detailHref} className="pd-port-card-link">
-      <div className="prof-port-card">
+      <div className={`prof-port-card${ownerDeleted ? " prof-port-card-deleted" : ""}`}>
         <div className="prof-port-head">
           <div className="prof-port-head-text">
             <div className="prof-port-name">{portfolio.name}</div>
@@ -31,6 +38,9 @@ export function PortfolioCard({ portfolio, onDelete }) {
                 <span className="prof-port-owner-val">
                   {portfolio.owner_label || `user #${portfolio.user_id}`}
                 </span>
+                {ownerDeleted ? (
+                  <span className="prof-port-deleted-badge">Deleted account</span>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -41,6 +51,17 @@ export function PortfolioCard({ portfolio, onDelete }) {
                 {formatUsd(portfolio.balance)}
               </span>
             </div>
+            {ownerDeleted && onRestore ? (
+              <button
+                type="button"
+                className="prof-port-restore"
+                onClick={(e) => handleRestoreClick(e, onRestore, portfolio)}
+                title="Restore account"
+                aria-label={`Restore account for ${portfolio.owner_label || portfolio.user_id}`}
+              >
+                Restore account
+              </button>
+            ) : null}
             {onDelete ? (
               <button
                 type="button"

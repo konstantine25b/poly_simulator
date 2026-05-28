@@ -748,3 +748,49 @@
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+.prof-port-card-deleted {
+  border-color: var(--danger-212-35);
+  background: linear-gradient(
+    165deg,
+    var(--danger-212-08) 0%,
+    var(--panel-95) 60%
+  );
+}
+
+.prof-port-deleted-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--danger-212-35);
+  background: var(--danger-212-08);
+  color: var(--danger);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.prof-chip-deleted {
+  background: var(--danger-212-08);
+  border-color: var(--danger-212-35);
+  color: var(--danger);
+}
+
+.prof-port-restore {
+  font: inherit;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--accent-line-55);
+  background: var(--accent-bg-12);
+  color: var(--accent-2);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.prof-port-restore:hover {
+  background: var(--accent-bg-18);
+}

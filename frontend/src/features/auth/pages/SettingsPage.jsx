@@ -1,9 +1,14 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useBrandLogo } from "../../../theme/useBrandLogo.js";
+import { DeleteAccountDialog } from "../components/DeleteAccountDialog.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { displayInitial, displayName } from "../userDisplay.js";
-import { resetPassword, updateProfile } from "../query/authApi.js";
+import {
+  deleteOwnAccount,
+  resetPassword,
+  updateProfile,
+} from "../query/authApi.js";
 import "../auth.css";
 import "../settings.css";
 
@@ -52,6 +57,8 @@ export function SettingsPage() {
   const [pwMsg, setPwMsg] = useState(null);
   const [pwErr, setPwErr] = useState(null);
   const [pwSaving, setPwSaving] = useState(false);
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const previewLabel = useMemo(() => {
     const trimmed = username.trim();
@@ -121,6 +128,14 @@ export function SettingsPage() {
     logout();
     navigate("/");
   };
+
+  const handleDeleteAccount = async (password) => {
+    await deleteOwnAccount(token, password);
+    logout();
+    navigate("/login", { replace: true });
+  };
+
+  const canDelete = !user?.is_admin;
 
   return (
     <div className="set-page prof-page">
@@ -326,8 +341,43 @@ export function SettingsPage() {
               Log out
             </button>
           </section>
+
+          {canDelete ? (
+            <section className="set-panel set-panel-danger" aria-labelledby="set-delete-title">
+              <div className="set-panel-head">
+                <PanelIcon danger>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden>
+                    <path d="M9 3v1H4v2h16V4h-5V3H9zm-3 5v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8H6zm3 2h2v9H9v-9zm4 0h2v9h-2v-9z" />
+                  </svg>
+                </PanelIcon>
+                <div className="set-panel-head-copy">
+                  <h2 id="set-delete-title" className="set-panel-title">
+                    Delete account
+                  </h2>
+                  <p className="set-panel-desc">
+                    Deactivate your account. You will no longer be able to log in. An
+                    administrator can restore your account afterwards.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="auth-btn auth-btn-danger set-logout"
+                onClick={() => setDeleteOpen(true)}
+              >
+                Delete my account
+              </button>
+            </section>
+          ) : null}
         </div>
       </div>
+
+      <DeleteAccountDialog
+        open={deleteOpen}
+        email={user?.email}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDeleteAccount}
+      />
     </div>
   );
 }

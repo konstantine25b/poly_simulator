@@ -98,3 +98,11 @@ export function resetPassword(token, email, currentPassword, newPassword) {
     token,
   );
 }
+
+export function deleteOwnAccount(token, password) {
+  return postJson("/auth/delete-account", { password }, token);
+}
+
+export function adminRestoreUser(token, userId) {
+  return postJson(`/admin/users/${encodeURIComponent(userId)}/restore`, {}, token);
+}

@@ -194,6 +194,14 @@ export function PortfolioDetailPage() {
                     {displayName(user)}
                   </span>
                 ) : null}
+                {summary?.owner_deleted ? (
+                  <span
+                    className="prof-chip prof-chip-deleted"
+                    title="Owner account has been deleted"
+                  >
+                    Deleted account
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>

@@ -18,15 +18,14 @@ export function ProfilePage() {
   const { user, token } = useAuth();
   const isAdmin = Boolean(user?.is_admin);
   const brandLogo = useBrandLogo();
-  const { items, loading, err, creating, create, remove, refresh } = useProfileData(
-    token,
-    user?.id,
-    isAdmin,
-  );
+  const { items, loading, err, creating, create, remove, refresh, restoreOwner } =
+    useProfileData(token, user?.id, isAdmin);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [restoreTarget, setRestoreTarget] = useState(null);
 
   const canDelete = (p) => isAdmin || Number(p.user_id) === Number(user?.id);
+  const handleRestore = isAdmin ? (p) => setRestoreTarget(p) : undefined;
 
   const totalCash = sum(items.map((p) => p.balance));
   const totalEquity = sum(items.map((p) => p.summary?.equity ?? p.balance));
@@ -135,6 +134,7 @@ export function ProfilePage() {
                 key={p.id}
                 portfolio={p}
                 onDelete={canDelete(p) ? setDeleteTarget : undefined}
+                onRestore={handleRestore}
               />
             ))}
           </div>
@@ -164,6 +164,23 @@ export function ProfilePage() {
         confirmLabel="Delete portfolio"
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => remove(deleteTarget.id)}
+      />
+
+      <ConfirmDialog
+        open={Boolean(restoreTarget)}
+        title={
+          restoreTarget
+            ? `Restore account ${restoreTarget.owner_label || `#${restoreTarget.user_id}`}?`
+            : ""
+        }
+        message={
+          restoreTarget
+            ? "The user will be able to log in again and access their portfolios."
+            : ""
+        }
+        confirmLabel="Restore account"
+        onClose={() => setRestoreTarget(null)}
+        onConfirm={() => restoreOwner(restoreTarget.user_id)}
       />
     </div>
   );

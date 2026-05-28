@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { adminRestoreUser } from "../query/authApi.js";
 import {
   createPortfolio,
   deletePortfolio,
@@ -39,11 +40,14 @@ async function loadPortfoliosWithSummaries(token, userId, isAdmin) {
   );
   return visible.map((p, i) => {
     const owner = userIndex ? userIndex.get(Number(p.user_id)) : null;
+    const ownerDeleted =
+      Boolean(p.owner_deleted) || Boolean(owner && owner.is_deleted);
     return {
       ...p,
       summary: summaries[i],
       owner_email: owner?.email ?? null,
       owner_label: owner ? (owner.username || owner.email) : null,
+      owner_deleted: ownerDeleted,
     };
   });
 }
@@ -121,5 +125,15 @@ export function useProfileData(token, userId, isAdmin) {
     [token, userId, isAdmin],
   );
 
-  return { items, loading, err, creating, create, remove, refresh };
+  const restoreOwner = useCallback(
+    async (ownerId) => {
+      if (!token || ownerId === undefined || ownerId === null) return null;
+      const result = await adminRestoreUser(token, ownerId);
+      await reload(false);
+      return result;
+    },
+    [token, reload],
+  );
+
+  return { items, loading, err, creating, create, remove, refresh, restoreOwner };
 }
