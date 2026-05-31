@@ -248,23 +248,11 @@ def _sync_bootstrap_admin_from_env(conn: Connection) -> None:
     if not em or not pw:
         return
     from polymarket.auth.passwords import hash_password
-    from polymarket.auth.users_db import (
-        fetch_user_by_email,
-        insert_user,
-        normalize_email,
-        update_user_admin,
-        update_user_password,
-    )
+    from polymarket.auth.users_db import fetch_user_by_email, insert_user, normalize_email
 
     email = normalize_email(em)
-    h = hash_password(pw)
-    row = fetch_user_by_email(conn, email)
-    if row is None:
-        insert_user(conn, email=email, password_hash=h, is_admin=True)
-    else:
-        uid = int(row["id"])
-        update_user_admin(conn, uid, True)
-        update_user_password(conn, uid, h)
+    if fetch_user_by_email(conn, email) is None:
+        insert_user(conn, email=email, password_hash=hash_password(pw), is_admin=True)
 
 
 def _seed_portfolio(conn: Connection) -> None:
