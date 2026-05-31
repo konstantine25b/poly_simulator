@@ -26,7 +26,6 @@ def _access_from_bearer(credentials: HTTPAuthorizationCredentials | None) -> Acc
     except ValueError:
         raise HTTPException(status_code=401, detail="invalid or expired token") from None
     uid = int(payload["sub"])
-    adm = bool(int(payload.get("adm", 0)))
     conn = get_connection()
     try:
         row = fetch_user_by_id(conn, uid)
@@ -36,6 +35,7 @@ def _access_from_bearer(credentials: HTTPAuthorizationCredentials | None) -> Acc
         raise HTTPException(status_code=401, detail="user not found")
     if is_user_deleted(row):
         raise HTTPException(status_code=401, detail="account deleted")
+    adm = bool(int(row["is_admin"]))
     return Access(user_id=uid, is_admin=adm)
 
 
