@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Annotated
+from typing import Annotated, Any
 from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException, Path, WebSocket, WebSocketDisconnect
@@ -15,6 +15,37 @@ from polymarket.config import settings
 from polymarket.http.schemas import BestBidAskEvent, BestBidAskWsDocs
 
 router = APIRouter(tags=["WebSockets"])
+
+
+def _price_str(value: Any) -> str:
+    if value is None:
+        return "0.00"
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "0.00"
+
+
+def _example_best_bid_ask_shape(market: dict[str, Any], asset_ids: list[str]) -> BestBidAskEvent:
+    condition = market.get("conditionId")
+    market_ref = str(condition) if condition else str(market.get("id") or "")
+    bb = market.get("bestBid")
+    ba = market.get("bestAsk")
+    spread = "0.00"
+    if bb is not None and ba is not None:
+        try:
+            spread = f"{float(ba) - float(bb):.2f}"
+        except (TypeError, ValueError):
+            pass
+    return BestBidAskEvent(
+        event_type="best_bid_ask",
+        market=market_ref,
+        asset_id=asset_ids[0],
+        best_bid=_price_str(bb),
+        best_ask=_price_str(ba),
+        spread=spread,
+        timestamp="0",
+    )
 
 
 async def _upstream_app_ping(upstream: ClientConnection) -> None:
@@ -55,15 +86,7 @@ def get_best_bid_ask_ws_docs(
     slug_out = str(slug_val) if slug_val is not None else None
     mid = market.get("id")
     path = f"/ws/markets/{quote(query, safe='')}/best-bid-ask"
-    shape = BestBidAskEvent(
-        event_type="best_bid_ask",
-        market="0x0005c0d312de0be897668695bae9f32b624b4a1ae8b140c49f08447fcc74f442",
-        asset_id="85354956062430465315924116860125388538595433819574542752031640332592237464430",
-        best_bid="0.73",
-        best_ask="0.77",
-        spread="0.04",
-        timestamp="1766789469958",
-    )
+    shape = _example_best_bid_ask_shape(market, asset_ids)
     return BestBidAskWsDocs(
         query=query,
         market_id=str(mid) if mid is not None else "",

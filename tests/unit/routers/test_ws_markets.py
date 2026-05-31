@@ -26,6 +26,8 @@ def test_ws_docs_resolves_query(_mock: object, client: TestClient) -> None:
     assert data["subscribed_asset_ids"] == ["111", "222"]
     assert data["websocket_path"] == "/ws/markets/my-example-market/best-bid-ask"
     assert data["message_shape"]["event_type"] == "best_bid_ask"
+    assert data["message_shape"]["asset_id"] == "111"
+    assert data["message_shape"]["market"] == "999"
 
 
 @patch(
