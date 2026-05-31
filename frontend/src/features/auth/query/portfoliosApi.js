@@ -1,83 +1,41 @@
-import { apiBase } from "../../../config.js";
-
-async function authedGet(token, path) {
-  const res = await fetch(`${apiBase}${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
-    const detail = data && (data.detail || data.message);
-    throw new Error(typeof detail === "string" ? detail : `Request failed (${res.status})`);
-  }
-  return data;
-}
-
-async function authedDelete(token, path) {
-  const res = await fetch(`${apiBase}${path}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
-    const detail = data && (data.detail || data.message);
-    throw new Error(typeof detail === "string" ? detail : `Request failed (${res.status})`);
-  }
-  return data;
-}
-
-async function authedPost(token, path, body) {
-  const res = await fetch(`${apiBase}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(body || {}),
-  });
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
-    const detail = data && (data.detail || data.message);
-    throw new Error(typeof detail === "string" ? detail : `Request failed (${res.status})`);
-  }
-  return data;
-}
+import { apiDelete, apiGet, apiPost } from "../../../apiClient.js";
 
 export function fetchPortfolios(token) {
-  return authedGet(token, "/portfolios");
+  return apiGet("/portfolios", token);
 }
 
 export function fetchPortfolioSummary(token, portfolioRef) {
-  return authedGet(token, `/portfolios/${encodeURIComponent(portfolioRef)}/summary`);
+  return apiGet(`/portfolios/${encodeURIComponent(portfolioRef)}/summary`, token);
 }
 
 export function fetchPortfolioPositions(token, portfolioRef) {
-  return authedGet(token, `/portfolios/${encodeURIComponent(portfolioRef)}/positions`);
+  return apiGet(`/portfolios/${encodeURIComponent(portfolioRef)}/positions`, token);
 }
 
 export function fetchPortfolioTrades(token, portfolioRef) {
-  return authedGet(token, `/portfolios/${encodeURIComponent(portfolioRef)}/trades`);
+  return apiGet(`/portfolios/${encodeURIComponent(portfolioRef)}/trades`, token);
 }
 
 export function createPortfolio(token, body) {
-  return authedPost(token, "/portfolios", body);
+  return apiPost("/portfolios", body, token);
 }
 
 export function fetchAdminUsers(token) {
-  return authedGet(token, "/admin/users");
+  return apiGet("/admin/users", token);
 }
 
 export function deletePortfolio(token, portfolioRef) {
-  return authedDelete(token, `/portfolios/${encodeURIComponent(portfolioRef)}`);
+  return apiDelete(`/portfolios/${encodeURIComponent(portfolioRef)}`, token);
 }
 
 export function placeBet(token, portfolioRef, body) {
-  return authedPost(token, `/portfolios/${encodeURIComponent(portfolioRef)}/bet`, body);
+  return apiPost(`/portfolios/${encodeURIComponent(portfolioRef)}/bet`, body, token);
 }
 
 export function closePosition(token, portfolioRef, body) {
-  return authedPost(token, `/portfolios/${encodeURIComponent(portfolioRef)}/close`, body);
+  return apiPost(`/portfolios/${encodeURIComponent(portfolioRef)}/close`, body, token);
 }
 
 export function settlePosition(token, portfolioRef, body) {
-  return authedPost(token, `/portfolios/${encodeURIComponent(portfolioRef)}/settle`, body);
+  return apiPost(`/portfolios/${encodeURIComponent(portfolioRef)}/settle`, body, token);
 }
