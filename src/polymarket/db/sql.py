@@ -38,6 +38,16 @@ def placeholder() -> str:
     return "%s" if settings.db_backend == "postgres" else "?"
 
 
+def begin_transaction(conn: Connection) -> None:
+    if settings.db_backend == "sqlite":
+        conn.execute("BEGIN")
+
+
+def begin_exclusive(conn: Connection) -> None:
+    if settings.db_backend == "sqlite":
+        conn.execute("BEGIN IMMEDIATE")
+
+
 def fetchall(conn: Connection, sql: str, params: tuple = ()) -> list:
     if settings.db_backend == "postgres":
         cur = conn.cursor()
@@ -73,6 +83,7 @@ def upsert_markets(conn: Connection, markets: list[dict]) -> int:
 
 
 def _upsert_sqlite(conn: sqlite3.Connection, markets: list[dict]) -> int:
+    begin_transaction(conn)
     columns = _get_columns_sqlite(conn)
     cursor = conn.cursor()
     inserted = 0

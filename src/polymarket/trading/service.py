@@ -8,6 +8,7 @@ from polymarket.auth import Access
 from polymarket.api.markets import fetch_market
 from polymarket.config import settings
 from polymarket.db import Connection, execute, fetchall, get_connection, placeholder
+from polymarket.db.sql import begin_exclusive, begin_transaction
 from polymarket.trading.pricing import (
     _buy_fill_price,
     _mark_price,
@@ -131,6 +132,7 @@ class TradingService:
         conn = get_connection()
         try:
             pid = _resolve_portfolio_id(conn, portfolio, access)
+            begin_transaction(conn)
             execute(conn, f"DELETE FROM trades WHERE portfolio_id = {ph}", (pid,))
             execute(conn, f"DELETE FROM positions WHERE portfolio_id = {ph}", (pid,))
             execute(conn, f"DELETE FROM portfolios WHERE id = {ph}", (pid,))
@@ -188,6 +190,7 @@ class TradingService:
         ph = placeholder()
         conn = get_connection()
         try:
+            begin_transaction(conn)
             oid = access.user_id
             if name is None:
                 pending = "__pending__"
@@ -351,8 +354,7 @@ class TradingService:
         conn = get_connection()
         try:
             pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
-            if settings.db_backend == "sqlite":
-                conn.execute("BEGIN IMMEDIATE")
+            begin_exclusive(conn)
             if settings.db_backend == "postgres":
                 prow = fetchall(
                     conn,
@@ -459,8 +461,7 @@ class TradingService:
         conn = get_connection()
         try:
             pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
-            if settings.db_backend == "sqlite":
-                conn.execute("BEGIN IMMEDIATE")
+            begin_exclusive(conn)
             ph = placeholder()
             rows = fetchall(
                 conn,
@@ -547,8 +548,7 @@ class TradingService:
         conn = get_connection()
         try:
             pid_pf = self.portfolio_id if portfolio is None else _resolve_portfolio_id(conn, portfolio, self.access)
-            if settings.db_backend == "sqlite":
-                conn.execute("BEGIN IMMEDIATE")
+            begin_exclusive(conn)
             ph = placeholder()
             rows = fetchall(
                 conn,
