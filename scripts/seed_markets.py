@@ -17,7 +17,7 @@ def seed() -> None:
     conn = get_connection()
     create_tables(conn)
     backend = settings.db_backend
-    label = settings.postgres_dsn if backend == "postgres" else str(settings.sqlite_path)
+    label = settings.postgres_label if backend == "postgres" else str(settings.sqlite_path)
     print(f"database ({backend}): {label}")
 
     total = 0

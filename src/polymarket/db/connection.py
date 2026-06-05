@@ -22,7 +22,7 @@ def get_connection(db_path: Path | None = None) -> Connection:
         if not _PG_AVAILABLE:
             raise RuntimeError("psycopg2 not installed — run: pip install psycopg2-binary")
         conn = psycopg2.connect(
-            settings.postgres_dsn,
+            **settings.postgres_connect_kwargs,
             cursor_factory=psycopg2.extras.RealDictCursor,
         )
         return conn

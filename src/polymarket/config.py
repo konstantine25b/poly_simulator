@@ -63,10 +63,20 @@ class Settings(BaseSettings):
     )
 
     @property
-    def postgres_dsn(self) -> str:
+    def postgres_connect_kwargs(self) -> dict[str, str | int]:
+        return {
+            "host": self.postgres_host,
+            "port": self.postgres_port,
+            "dbname": self.postgres_db,
+            "user": self.postgres_user,
+            "password": self.postgres_password,
+        }
+
+    @property
+    def postgres_label(self) -> str:
         return (
-            f"postgresql://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+            f"postgresql://{self.postgres_user}@{self.postgres_host}"
+            f":{self.postgres_port}/{self.postgres_db}"
         )
 
 
