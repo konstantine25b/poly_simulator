@@ -1,5 +1,6 @@
 import json
 import time
+from collections.abc import Iterator
 
 import httpx
 
@@ -7,6 +8,7 @@ from polymarket.api.cache import TTLCache
 from polymarket.api.client import PolymarketClient, gamma_client
 
 _DEFAULT_LIMIT = 100
+_MAX_OFFSET = 10_000
 
 _market_cache = TTLCache(ttl_seconds=30.0, miss_ttl_seconds=10.0, max_size=2048)
 
@@ -30,6 +32,29 @@ def _normalize(market: dict) -> dict:
     return market
 
 
+def _list_params(
+    *,
+    limit: int,
+    active: bool,
+    closed: bool,
+    order: str,
+    ascending: bool,
+) -> dict:
+    return {
+        "limit": limit,
+        "active": str(active).lower(),
+        "closed": str(closed).lower(),
+        "order": order,
+        "ascending": str(ascending).lower(),
+    }
+
+
+def _filter_accepting_orders(markets: list[dict], accepting_orders: bool) -> list[dict]:
+    if not accepting_orders:
+        return markets
+    return [m for m in markets if m.get("acceptingOrders") is True]
+
+
 def get_markets(
     client: PolymarketClient | None = None,
     limit: int = _DEFAULT_LIMIT,
@@ -41,35 +66,69 @@ def get_markets(
     ascending: bool = False,
 ) -> list[dict]:
     c = client or gamma_client()
-    params: dict = {
-        "limit": limit,
-        "offset": offset,
-        "active": str(active).lower(),
-        "closed": str(closed).lower(),
-        "order": order,
-        "ascending": str(ascending).lower(),
-    }
+    params = _list_params(
+        limit=limit, active=active, closed=closed, order=order, ascending=ascending
+    )
+    params["offset"] = offset
     raw = c.get("/markets", params=params)
     markets = [_normalize(m) for m in (raw if isinstance(raw, list) else [])]
-    if accepting_orders:
-        markets = [m for m in markets if m.get("acceptingOrders") is True]
-    return markets
+    return _filter_accepting_orders(markets, accepting_orders)
+
+
+def get_markets_keyset(
+    client: PolymarketClient | None = None,
+    limit: int = _DEFAULT_LIMIT,
+    after_cursor: str | None = None,
+    active: bool = True,
+    closed: bool = False,
+    order: str = "createdAt",
+    ascending: bool = False,
+) -> tuple[list[dict], str | None]:
+    c = client or gamma_client()
+    params = _list_params(
+        limit=limit, active=active, closed=closed, order=order, ascending=ascending
+    )
+    if after_cursor:
+        params["after_cursor"] = after_cursor
+    raw = c.get("/markets/keyset", params=params)
+    if not isinstance(raw, dict):
+        return [], None
+    markets = [_normalize(m) for m in raw.get("markets") or []]
+    return markets, raw.get("next_cursor")
+
+
+def iter_market_batches(
+    client: PolymarketClient | None = None,
+    limit: int = _DEFAULT_LIMIT,
+    active: bool = True,
+    closed: bool = False,
+    accepting_orders: bool = True,
+    order: str = "createdAt",
+    ascending: bool = False,
+) -> Iterator[list[dict]]:
+    c = client or gamma_client()
+    after_cursor: str | None = None
+
+    while True:
+        raw_batch, after_cursor = get_markets_keyset(
+            client=c,
+            limit=limit,
+            after_cursor=after_cursor,
+            active=active,
+            closed=closed,
+            order=order,
+            ascending=ascending,
+        )
+        yield _filter_accepting_orders(raw_batch, accepting_orders)
+        if not raw_batch or len(raw_batch) < limit or not after_cursor:
+            break
 
 
 def get_all_active_markets(client: PolymarketClient | None = None) -> list[dict]:
     c = client or gamma_client()
     all_markets: list[dict] = []
-    offset = 0
-
-    while True:
-        batch = get_markets(client=c, limit=_DEFAULT_LIMIT, offset=offset)
-        if not batch:
-            break
+    for batch in iter_market_batches(client=c):
         all_markets.extend(batch)
-        if len(batch) < _DEFAULT_LIMIT:
-            break
-        offset += _DEFAULT_LIMIT
-
     return all_markets
 
 

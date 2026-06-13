@@ -11,6 +11,8 @@ from polymarket.api.markets import (
     get_all_active_markets,
     get_market_by_id,
     get_markets,
+    get_markets_keyset,
+    iter_market_batches,
 )
 
 
@@ -129,10 +131,67 @@ class TestGetMarkets:
         assert result[1]["id"] == "456"
 
 
+class TestGetMarketsKeyset:
+    def test_returns_normalized_markets_and_cursor(self, raw_market: dict) -> None:
+        mock_client = MagicMock()
+        mock_client.get.return_value = {"markets": [raw_market], "next_cursor": "abc"}
+
+        markets, cursor = get_markets_keyset(client=mock_client, limit=10)
+
+        assert len(markets) == 1
+        assert markets[0]["outcomes"] == ["Yes", "No"]
+        assert cursor == "abc"
+        mock_client.get.assert_called_once_with(
+            "/markets/keyset",
+            params={
+                "limit": 10,
+                "active": "true",
+                "closed": "false",
+                "order": "createdAt",
+                "ascending": "false",
+            },
+        )
+
+    def test_sends_after_cursor(self) -> None:
+        mock_client = MagicMock()
+        mock_client.get.return_value = {"markets": [], "next_cursor": None}
+
+        get_markets_keyset(client=mock_client, after_cursor="token123")
+
+        mock_client.get.assert_called_once_with(
+            "/markets/keyset",
+            params={
+                "limit": 100,
+                "active": "true",
+                "closed": "false",
+                "order": "createdAt",
+                "ascending": "false",
+                "after_cursor": "token123",
+            },
+        )
+
+
+class TestIterMarketBatches:
+    def test_yields_pages_until_cursor_exhausted(self, raw_market: dict) -> None:
+        full_page = [dict(raw_market, id=str(i)) for i in range(100)]
+        partial_page = [dict(raw_market, id=str(i)) for i in range(100, 120)]
+
+        mock_client = MagicMock()
+        mock_client.get.side_effect = [
+            {"markets": full_page, "next_cursor": "c1"},
+            {"markets": partial_page, "next_cursor": None},
+        ]
+
+        batches = list(iter_market_batches(client=mock_client, accepting_orders=False))
+
+        assert [len(b) for b in batches] == [100, 20]
+        assert mock_client.get.call_count == 2
+
+
 class TestGetAllActiveMarkets:
     def test_fetches_single_page_when_less_than_limit(self, raw_market: dict) -> None:
         mock_client = MagicMock()
-        mock_client.get.return_value = [raw_market]
+        mock_client.get.return_value = {"markets": [raw_market], "next_cursor": None}
 
         result = get_all_active_markets(client=mock_client)
 
@@ -144,7 +203,10 @@ class TestGetAllActiveMarkets:
         partial_page = [dict(raw_market, id=str(i)) for i in range(100, 120)]
 
         mock_client = MagicMock()
-        mock_client.get.side_effect = [full_page, partial_page]
+        mock_client.get.side_effect = [
+            {"markets": full_page, "next_cursor": "c1"},
+            {"markets": partial_page, "next_cursor": None},
+        ]
 
         result = get_all_active_markets(client=mock_client)
 
@@ -153,26 +215,29 @@ class TestGetAllActiveMarkets:
 
     def test_stops_on_empty_page(self) -> None:
         mock_client = MagicMock()
-        mock_client.get.return_value = []
+        mock_client.get.return_value = {"markets": [], "next_cursor": None}
 
         result = get_all_active_markets(client=mock_client)
 
         assert result == []
         assert mock_client.get.call_count == 1
 
-    def test_second_page_uses_correct_offset(self, raw_market: dict) -> None:
+    def test_second_page_uses_after_cursor(self, raw_market: dict) -> None:
         full_page = [dict(raw_market, id=str(i)) for i in range(100)]
 
         mock_client = MagicMock()
-        mock_client.get.side_effect = [full_page, []]
+        mock_client.get.side_effect = [
+            {"markets": full_page, "next_cursor": "c1"},
+            {"markets": [], "next_cursor": None},
+        ]
 
         get_all_active_markets(client=mock_client)
 
         first_call_params = mock_client.get.call_args_list[0][1]["params"]
         second_call_params = mock_client.get.call_args_list[1][1]["params"]
 
-        assert first_call_params["offset"] == 0
-        assert second_call_params["offset"] == 100
+        assert "after_cursor" not in first_call_params
+        assert second_call_params["after_cursor"] == "c1"
 
 
 class TestGetMarketById:

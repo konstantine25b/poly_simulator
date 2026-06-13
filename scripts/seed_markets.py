@@ -5,7 +5,7 @@ import httpx
 
 sys.path.insert(0, "src")
 
-from polymarket.api.markets import get_markets
+from polymarket.api.markets import get_markets_keyset
 from polymarket.db import create_tables, get_connection, upsert_markets
 from polymarket.config import settings
 
@@ -21,18 +21,21 @@ def seed() -> None:
     print(f"database ({backend}): {label}")
 
     total = 0
-    offset = 0
+    after_cursor: str | None = None
     page = 1
 
     while True:
-        print(f"fetching page {page} (offset={offset})...", end=" ", flush=True)
+        cursor_for_page = after_cursor
+        print(f"fetching page {page}...", end=" ", flush=True)
         try:
-            batch = get_markets(limit=_PAGE_SIZE, offset=offset, accepting_orders=False)
+            batch, after_cursor = get_markets_keyset(
+                limit=_PAGE_SIZE,
+                after_cursor=cursor_for_page,
+            )
         except httpx.ReadTimeout:
             print(f"timeout — waiting {_TIMEOUT_PAUSE}s then continuing")
             time.sleep(_TIMEOUT_PAUSE)
-            offset += _PAGE_SIZE
-            page += 1
+            after_cursor = cursor_for_page
             continue
 
         if not batch:
@@ -43,10 +46,9 @@ def seed() -> None:
         total += inserted
         print(f"{inserted} markets saved")
 
-        if len(batch) < _PAGE_SIZE:
+        if len(batch) < _PAGE_SIZE or not after_cursor:
             break
 
-        offset += _PAGE_SIZE
         page += 1
 
     conn.close()

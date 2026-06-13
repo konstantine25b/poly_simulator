@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from polymarket.api.client import gamma_client
-from polymarket.api.markets import get_market_by_id, get_markets
+from polymarket.api.markets import get_market_by_id, get_markets, iter_market_batches
 from polymarket.db import (
     create_tables,
     executemany,
@@ -48,32 +48,49 @@ def refresh_catalog(*, incremental: bool = False, quiet: bool = False) -> dict[s
     log(f"active+open markets in db : {len(db_ids)}")
 
     api_markets: list[dict] = []
-    offset = 0
-    page = 1
 
     with gamma_client() as http:
-        while True:
-            log(f"fetching page {page} (offset={offset})...", end=" ")
-            batch = get_markets(
+        if incremental:
+            offset = 0
+            page = 1
+            while True:
+                log(f"fetching page {page} (offset={offset})...", end=" ")
+                batch = get_markets(
+                    client=http,
+                    limit=PAGE_SIZE,
+                    offset=offset,
+                    accepting_orders=False,
+                    order="createdAt",
+                    ascending=False,
+                )
+                if not batch:
+                    log("empty — done")
+                    break
+                api_markets.extend(batch)
+                log(f"{len(batch)}")
+                if all(m["id"] in db_ids for m in batch):
+                    log("incremental: page all in db — stopping")
+                    break
+                if len(batch) < PAGE_SIZE:
+                    break
+                offset += PAGE_SIZE
+                page += 1
+        else:
+            page = 1
+            for batch in iter_market_batches(
                 client=http,
                 limit=PAGE_SIZE,
-                offset=offset,
                 accepting_orders=False,
                 order="createdAt",
                 ascending=False,
-            )
-            if not batch:
-                log("empty — done")
-                break
-            api_markets.extend(batch)
-            log(f"{len(batch)}")
-            if incremental and all(m["id"] in db_ids for m in batch):
-                log("incremental: page all in db — stopping")
-                break
-            if len(batch) < PAGE_SIZE:
-                break
-            offset += PAGE_SIZE
-            page += 1
+            ):
+                log(f"fetching page {page}...", end=" ")
+                if not batch:
+                    log("empty — done")
+                    break
+                api_markets.extend(batch)
+                log(f"{len(batch)}")
+                page += 1
 
     api_ids = {m["id"] for m in api_markets}
 
